@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>とろろぉーーーーID（とろID）｜設定ページ</title>
+<meta name="description" content="とろろぉーーーーID（とろID）の設定ページ。ログイン状態や会員番号の確認、パスキーの登録ができます。">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fdfcff; --card:#ffffff; --text:#4a4553; --muted:#a8a2b3;
+  --accent:#ffb8d1; --accent2:#c4b5fd; --accent3:#a5e8e0;
+  --line:#f1e9f7; --chip:#f7f2fc; --shadow:0 10px 30px rgba(196,181,253,.18);
+  --grad:linear-gradient(120deg,#ffb8d1,#c4b5fd 55%,#a5e8e0);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased}
+.ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;vertical-align:-.18em}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+a{color:inherit}
+.btn{display:inline-flex;align-items:center;gap:.45em;border:none;cursor:pointer;font-family:inherit;font-weight:900;font-size:1rem;color:#fff;background:var(--grad);padding:.8em 1.7em;border-radius:999px;box-shadow:0 8px 20px rgba(255,184,209,.45);transition:transform .15s;text-decoration:none}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:#fff;color:var(--text);border:2px solid var(--line);box-shadow:none}
+.btn.small{font-size:.88rem;padding:.55em 1.3em}
+.btn:disabled{opacity:.55;cursor:default;transform:none}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+/* hero */
+.hero{text-align:center;padding:64px 20px 30px}
+.fp-logo{width:92px;height:92px;margin:0 auto 18px;border-radius:28px;background:var(--grad);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.fp-logo .ms{font-size:52px;color:#fff;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 48}
+.hero h1{font-size:clamp(1.7rem,6vw,2.4rem);font-weight:900;letter-spacing:.02em}
+.hero h1 .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);font-weight:700;margin-top:8px}
+.status-chip{display:inline-flex;align-items:center;gap:.4em;margin-top:16px;background:var(--chip);border:1.5px solid var(--line);border-radius:999px;padding:.35em 1.1em;font-weight:900;font-size:.9rem}
+.status-chip .dot{width:9px;height:9px;border-radius:50%;background:#d8d2e4}
+.status-chip.on .dot{background:#34c98e}
+/* sections */
+.sec{padding:26px 0}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sec-head .ic{width:40px;height:40px;border-radius:12px;background:var(--chip);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center}
+.sec-head .ic .ms{font-size:22px;color:#9a86d8}
+.sec-head h2{font-size:1.25rem;font-weight:900}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:26px}
+.id-card{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.id-card img,.id-card .avatar-fallback{width:76px;height:76px;border-radius:50%;object-fit:cover;border:3px solid var(--accent2);flex:none}
+.id-card .avatar-fallback{display:flex;align-items:center;justify-content:center;background:var(--chip)}
+.id-card .avatar-fallback .ms{font-size:38px;color:#9a86d8}
+.id-card .who{min-width:0}
+.id-card .name{font-size:1.3rem;font-weight:900;word-break:break-all}
+.id-card .meta{color:var(--muted);font-weight:700;font-size:.92rem}
+.id-card .no{margin-left:auto;text-align:right;flex:none}
+.id-card .no .label{font-size:.75rem;color:var(--muted);font-weight:900}
+.id-card .no .num{font-size:1.5rem;font-weight:900;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.center{text-align:center}
+.note{font-size:.85rem;color:var(--muted);font-weight:700}
+.pk-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.pk-status{font-weight:900}
+.sites{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.site-card{display:block;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:20px;text-decoration:none;box-shadow:var(--shadow);transition:transform .15s}
+.site-card:hover{transform:translateY(-3px)}
+.site-card .ms{font-size:28px;color:#9a86d8}
+.site-card h3{font-size:1.02rem;font-weight:900;margin:6px 0 2px}
+.site-card p{font-size:.83rem;color:var(--muted);font-weight:700}
+.methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.method{background:var(--chip);border:1.5px solid var(--line);border-radius:16px;padding:16px;text-align:center;font-weight:900}
+.method .ms{display:block;font-size:28px;color:#9a86d8;margin-bottom:6px}
+.method small{display:block;color:var(--muted);font-weight:700;font-size:.78rem;margin-top:2px}
+footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:700;font-size:.88rem}
+/* login modal */
+.lm-overlay{position:fixed;inset:0;background:rgba(74,69,83,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
+.lm-overlay.open{display:flex}
+.lm-box{background:#fff;border-radius:22px;max-width:400px;width:100%;padding:26px;box-shadow:0 24px 60px rgba(74,69,83,.3);max-height:92vh;overflow:auto}
+.lm-box h3{font-size:1.15rem;font-weight:900;margin-bottom:4px}
+.lm-box .lm-sub{font-size:.85rem;color:var(--muted);font-weight:700;margin-bottom:16px}
+.lm-btn{display:flex;align-items:center;gap:10px;width:100%;padding:.8em 1em;margin-bottom:10px;border-radius:14px;border:2px solid var(--line);background:#fff;font-family:inherit;font-weight:900;font-size:.98rem;color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;text-align:left}
+.lm-btn:hover{border-color:var(--accent2);background:#fbfaff}
+.lm-btn .ms{color:#9a86d8}
+.lm-or{text-align:center;color:var(--muted);font-weight:900;font-size:.8rem;margin:12px 0}
+.lm-box input{width:100%;padding:.75em 1em;border:2px solid var(--line);border-radius:12px;font-family:inherit;font-size:.95rem;margin-bottom:10px;color:var(--text);background:#fff}
+.lm-box input:focus{outline:none;border-color:var(--accent2)}
+.lm-row{display:flex;gap:10px}
+.lm-row .lm-btn{justify-content:center;text-align:center}
+.lm-error{display:none;background:#fff1f3;border:1.5px solid #ffc9d2;color:#c2435e;border-radius:12px;padding:.6em .9em;font-weight:700;font-size:.86rem;margin-bottom:12px}
+.lm-info{display:none;background:#eefaf4;border:1.5px solid #bfe9d2;color:#1e7d55;border-radius:12px;padding:.6em .9em;font-weight:700;font-size:.86rem;margin-bottom:12px}
+.lm-close{margin-top:6px}
+.lm-note{font-size:.78rem;color:var(--muted);font-weight:700;margin-top:10px}
+.pk-msg{font-size:.86rem;font-weight:700;margin-top:10px;min-height:1.2em}
+.pk-msg.ok{color:#1e7d55}.pk-msg.err{color:#c2435e}
+</style>
+</head>
+<body>
+<header class="hero wrap">
+  <div class="fp-logo"><span class="ms">fingerprint</span></div>
+  <h1>とろろぉーーーー<span class="grad-text">ID</span></h1>
+  <p>とろIDの設定ページ。対応サイト全部で使える共通アカウントだよ。</p>
+  <div><span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">読み込み中…</span></span></div>
+</header>
+
+<main class="wrap">
+  <section class="sec reveal">
+    <div class="sec-head"><span class="ic"><span class="ms">badge</span></span><h2>会員カード</h2></div>
+    <div class="card" id="idCard"><p class="note">読み込み中…</p></div>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head"><span class="ic"><span class="ms">passkey</span></span><h2>パスキー</h2></div>
+    <div class="card">
+      <p class="pk-status" id="pkStatus">確認中…</p>
+      <p class="note" style="margin-top:6px">パスキーを登録すると、この端末の指紋・顔認証などでログインできます。登録情報はこの端末（ブラウザ）の中だけに保存されます。</p>
+      <div class="pk-row">
+        <button class="btn small" id="pkRegisterBtn" type="button"><span class="ms">passkey</span>パスキーを登録</button>
+        <button class="btn small ghost" id="pkDeleteBtn" type="button">登録を削除</button>
+      </div>
+      <p class="pk-msg" id="pkMsg"></p>
+    </div>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head"><span class="ic"><span class="ms">login</span></span><h2>ログイン方法</h2></div>
+    <div class="methods">
+      <div class="method"><span class="ms">stadia_controller</span>Scratch<small>ScratchLoginSystem</small></div>
+      <div class="method"><span class="ms">account_circle</span>Google<small>Googleアカウント</small></div>
+      <div class="method"><span class="ms">code</span>GitHub<small>GitHubアカウント</small></div>
+      <div class="method"><span class="ms">mail</span>メールアドレス<small>新規登録・再設定OK</small></div>
+      <div class="method"><span class="ms">passkey</span>パスキー<small>登録した端末のみ</small></div>
+    </div>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head"><span class="ic"><span class="ms">language</span></span><h2>対応サイト</h2></div>
+    <div class="sites">
+      <a class="site-card" href="https://tr3131kami.github.io/yt-hp/" target="_blank" rel="noopener"><span class="ms">home</span><h3>とろろぉーーーー ホームページ</h3><p>同じID・同じ会員番号でログインできます</p></a>
+      <a class="site-card" href="https://tr3131kami.github.io/suzunokana-hp/" target="_blank" rel="noopener"><span class="ms">stadia_controller</span><h3>suzunokana 公式ホームページ</h3><p>同じID・同じ会員番号でログインできます</p></a>
+      <a class="site-card" href="https://kamiki-chyt.github.io/kamiki-hp/" target="_blank" rel="noopener"><span class="ms">groups</span><h3>神木チャンネル 公式サイト</h3><p>同じID・同じ会員番号でログインできます（ログイン操作はサイトごと）</p></a>
+    </div>
+  </section>
+</main>
+
+<footer>とろろぉーーーーID（とろID）</footer>
+
+<div class="lm-overlay" id="loginModal" role="dialog" aria-modal="true" aria-label="ログイン">
+  <div class="lm-box">
+    <h3>とろろぉーーーーIDでログイン</h3>
+    <p class="lm-sub">対応サイト共通のアカウントでログインします</p>
+    <div class="lm-error" id="lmError"></div>
+    <div class="lm-info" id="lmInfo"></div>
+    <button class="lm-btn" id="lmScratch" type="button"><span class="ms">stadia_controller</span>Scratchでログイン</button>
+    <button class="lm-btn" id="lmGoogle" type="button"><span class="ms">account_circle</span>Googleでログイン</button>
+    <button class="lm-btn" id="lmGithub" type="button"><span class="ms">code</span>GitHubでログイン</button>
+    <button class="lm-btn" id="lmPasskey" type="button"><span class="ms">passkey</span>パスキーでログイン</button>
+    <div class="lm-or">または メールアドレスで</div>
+    <input type="email" id="lmEmail" placeholder="メールアドレス" autocomplete="email">
+    <input type="password" id="lmPassword" placeholder="パスワード" autocomplete="current-password">
+    <div class="lm-row">
+      <button class="lm-btn" id="lmEmailLogin" type="button">ログイン</button>
+      <button class="lm-btn" id="lmEmailSignup" type="button">新規登録</button>
+    </div>
+    <button class="lm-btn" id="lmReset" type="button"><span class="ms">lock_reset</span>パスワードを忘れた場合</button>
+    <button class="lm-btn lm-close" id="lmClose" type="button">閉じる</button>
+    <p class="lm-note">Scratchログインは ScratchLoginSystem（suzunokana × とろろぉーーーー）を使います。パスキーは登録した端末でのみ使えます。</p>
+  </div>
+</div>
+
+<script>
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .08 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+<script src="https://tr3131kami.github.io/ScratchLoginSystem/scratch-login.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = { apiKey: 'AIzaSyBfKW5cuKxXBFHWV1MRumSey8PPwgcCfvQ', authDomain: 'tororo-hp.firebaseapp.com', projectId: 'tororo-hp', storageBucket: 'tororo-hp.firebasestorage.app', messagingSenderId: '133948474364', appId: '1:133948474364:web:decac4c97ddd8f167ba879' };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+let fbUser = null, memberNo = null;
+function scratchUser() { try { return localStorage.getItem('sls_user') || null; } catch (e) { return null; } }
+const PK_KEY = 'tororo_passkey', PK_SESSION = 'tororo_pk_user';
+const pkSupported = !!window.PublicKeyCredential;
+function pkRecord() { try { return JSON.parse(localStorage.getItem(PK_KEY) || 'null'); } catch (e) { return null; } }
+function pkUser() { try { return sessionStorage.getItem(PK_SESSION); } catch (e) { return null; } }
+
+function identity() {
+  if (fbUser) {
+    const provider = (fbUser.providerData[0] && fbUser.providerData[0].providerId) || '';
+    const method = provider === 'google.com' ? 'Googleでログイン中' : provider === 'github.com' ? 'GitHubでログイン中' : 'メールアドレスでログイン中';
+    return { name: fbUser.displayName || fbUser.email || 'ユーザー', method, avatar: fbUser.photoURL || '', no: memberNo };
+  }
+  const pk = pkUser();
+  if (pk) return { name: pk, method: 'パスキーでログイン中', avatar: '', no: null };
+  const sc = scratchUser();
+  if (sc) return { name: sc, method: 'Scratchでログイン中', avatar: 'https://cdn2.scratch.mit.edu/get_image/user/' + encodeURIComponent(sc) + '_76x76.png', no: null };
+  return null;
+}
+
+function render() {
+  const idn = identity();
+  const chip = $('statusChip'), st = $('statusText');
+  if (idn) { chip.classList.add('on'); st.textContent = idn.name + ' でログイン中'; }
+  else { chip.classList.remove('on'); st.textContent = 'ログインしていません'; }
+  const card = $('idCard');
+  if (idn) {
+    const noText = idn.no != null ? String(idn.no).padStart(4, '0') : '—';
+    const av = idn.avatar ? '<img src="' + esc(idn.avatar) + '" alt="">' : '<span class="avatar-fallback"><span class="ms">person</span></span>';
+    card.innerHTML = '<div class="id-card">' + av + '<div class="who"><div class="name">' + esc(idn.name) + '</div><div class="meta">' + esc(idn.method) + '</div></div><div class="no"><div class="label">会員No.</div><div class="num">' + noText + '</div></div></div>'
+      + '<div class="pk-row"><button class="btn small ghost" id="cardLogout" type="button"><span class="ms">logout</span>ログアウト</button></div>'
+      + (idn.no == null ? '<p class="note" style="margin-top:10px">※ 会員No.は Google / GitHub / メールアドレスでログインしたときに発行されます。</p>' : '');
+    $('cardLogout').addEventListener('click', doLogout);
+  } else {
+    card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:14px">ログインすると、ここに会員カードが表示されます。</p><button class="btn" id="cardLogin" type="button"><span class="ms">login</span>ログイン方法を選ぶ</button></div>';
+    $('cardLogin').addEventListener('click', openModal);
+  }
+  renderPk();
+}
+function renderPk() {
+  const st = $('pkStatus'), rec = pkRecord(), idn = identity();
+  if (!pkSupported) st.textContent = 'このブラウザはパスキーに未対応です';
+  else if (rec) st.textContent = '登録済み（' + rec.name + '）— この端末でパスキーログインできます';
+  else st.textContent = '未登録です';
+  $('pkRegisterBtn').disabled = !pkSupported || !idn;
+  $('pkDeleteBtn').disabled = !rec;
+  if (!idn && pkSupported && !rec) st.textContent = '未登録です（登録には先にログインが必要です）';
+}
+function pkMsg(text, ok) { const m = $('pkMsg'); m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
+
+async function doLogout() {
+  try { await signOut(auth); } catch (e) {}
+  try { localStorage.removeItem('sls_user'); localStorage.removeItem('sa_username'); sessionStorage.removeItem(PK_SESSION); } catch (e) {}
+  memberNo = null; render();
+}
+
+/* member number */
+async function ensureMemberNo(user) {
+  const ref = doc(db, 'users', user.uid);
+  const no = await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (snap.exists() && typeof snap.data().memberNo === 'number') return snap.data().memberNo;
+    const cref = doc(db, 'meta', 'counter');
+    const csnap = await tx.get(cref);
+    const next = (csnap.exists() && typeof csnap.data().value === 'number' ? csnap.data().value : 0) + 1;
+    tx.set(cref, { value: next }, { merge: true });
+    tx.set(ref, { memberNo: next, createdAt: Date.now() }, { merge: true });
+    return next;
+  });
+  return no;
+}
+getRedirectResult(auth).catch(() => {});
+onAuthStateChanged(auth, async user => {
+  fbUser = user; memberNo = null; render();
+  if (user) { try { memberNo = await ensureMemberNo(user); } catch (e) {} render(); }
+});
+
+/* modal */
+function lmShow(el, msg) { const e = $(el); if (msg) { e.textContent = msg; e.style.display = 'block'; } else { e.style.display = 'none'; } }
+function lmError(msg) { lmShow('lmError', msg); if (msg) lmShow('lmInfo', null); }
+function lmInfo(msg) { lmShow('lmInfo', msg); if (msg) lmShow('lmError', null); }
+function openModal() { lmError(null); lmInfo(null); $('loginModal').classList.add('open'); }
+function closeModal() { $('loginModal').classList.remove('open'); }
+$('lmClose').addEventListener('click', closeModal);
+$('loginModal').addEventListener('click', e => { if (e.target === $('loginModal')) closeModal(); });
+
+function friendlyError(e) {
+  const c = (e && e.code) || '';
+  const map = {
+    'auth/invalid-email': 'メールアドレスの形式が違います',
+    'auth/missing-email': 'メールアドレスを入力してね',
+    'auth/missing-password': 'パスワードを入力してね',
+    'auth/weak-password': 'パスワードが短すぎます（6文字以上にしてね）',
+    'auth/email-already-in-use': 'このメールアドレスは登録済みです。「ログイン」を押してね',
+    'auth/invalid-credential': 'メールアドレスかパスワードが違います',
+    'auth/user-not-found': 'メールアドレスかパスワードが違います',
+    'auth/wrong-password': 'メールアドレスかパスワードが違います',
+    'auth/popup-closed-by-user': 'ログイン画面が閉じられました。もう一度試してね',
+    'auth/cancelled-popup-request': 'ログイン画面が閉じられました。もう一度試してね',
+    'auth/account-exists-with-different-credential': 'このメールアドレスは別の方法で登録済みです。別のログイン方法を試してね',
+    'auth/unauthorized-domain': 'このサイトのドメインが許可されていません',
+    'auth/too-many-requests': '試行が多すぎます。少し待ってから試してね',
+    'auth/network-request-failed': '通信に失敗しました。接続を確認してね'
+  };
+  return map[c] || ('ログインに失敗しました（' + (c || 'unknown') + '）');
+}
+function socialLogin(provider, label) {
+  lmError(null); lmInfo(null);
+  signInWithPopup(auth, provider).then(() => closeModal()).catch(e => {
+    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
+      signInWithRedirect(auth, provider).catch(err => lmError(friendlyError(err)));
+    } else lmError(friendlyError(e));
+  });
+}
+$('lmGoogle').addEventListener('click', () => socialLogin(new GoogleAuthProvider(), 'Google'));
+$('lmGithub').addEventListener('click', () => socialLogin(new GithubAuthProvider(), 'GitHub'));
+$('lmEmailLogin').addEventListener('click', async () => {
+  lmError(null); lmInfo(null);
+  try { await signInWithEmailAndPassword(auth, $('lmEmail').value.trim(), $('lmPassword').value); closeModal(); }
+  catch (e) { lmError(friendlyError(e)); }
+});
+$('lmEmailSignup').addEventListener('click', async () => {
+  lmError(null); lmInfo(null);
+  try { await createUserWithEmailAndPassword(auth, $('lmEmail').value.trim(), $('lmPassword').value); closeModal(); }
+  catch (e) { lmError(friendlyError(e)); }
+});
+$('lmReset').addEventListener('click', async () => {
+  lmError(null); lmInfo(null);
+  const email = $('lmEmail').value.trim();
+  if (!email) { lmError('先にメールアドレスを入力してね'); return; }
+  try { await sendPasswordResetEmail(auth, email); lmInfo('パスワード再設定のメールを送りました。メールを確認してね'); }
+  catch (e) { lmError(friendlyError(e)); }
+});
+$('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.login(); });
+try {
+  ScratchLogin.init({ onLogin: () => render(), onLogout: () => render() });
+} catch (e) {}
+
+/* passkey (yt-hpと共通の保存形式: 同じドメインのサイト間で使えます) */
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+const unb64 = s => Uint8Array.from(atob(s.replaceAll('-', '+').replaceAll('_', '/')), c => c.charCodeAt(0));
+async function pkRegister() {
+  pkMsg('');
+  const idn = identity();
+  if (!idn) { pkMsg('先にログインしてから登録してね', false); return; }
+  if (!pkSupported) { pkMsg('このブラウザはパスキーに未対応です', false); return; }
+  if (pkRecord()) { pkMsg('すでに登録済みです。作り直す場合は先に「登録を削除」してね', false); return; }
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'とろろぉーーーーID', id: location.hostname },
+      user: { id: new TextEncoder().encode('tororo-' + idn.name).slice(0, 64), name: idn.name, displayName: idn.name },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { userVerification: 'preferred', residentKey: 'preferred' },
+      timeout: 60000
+    } });
+    const spki = cred.response.getPublicKey ? cred.response.getPublicKey() : null;
+    if (!spki) { pkMsg('この端末では公開鍵を取得できず、登録できませんでした', false); return; }
+    localStorage.setItem(PK_KEY, JSON.stringify({ credId: b64(cred.rawId), spki: b64(spki), alg: cred.response.getPublicKeyAlgorithm(), name: idn.name }));
+    pkMsg('登録しました！次回からパスキーでログインできます', true); renderPk();
+  } catch (e) {
+    pkMsg(e && e.name === 'NotAllowedError' ? 'キャンセルされました' : '登録に失敗しました（' + (e && e.name ? e.name : 'error') + '）', false);
+  }
+}
+async function pkLoginFlow() {
+  const rec = pkRecord();
+  if (!pkSupported) { lmError('このブラウザはパスキーに未対応です'); return false; }
+  if (!rec) { lmError('この端末にパスキーが登録されていません。先にどれかの方法でログインして、このページで登録してね'); return false; }
+  try {
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rpId: location.hostname,
+      allowCredentials: [{ type: 'public-key', id: unb64(rec.credId).buffer }],
+      userVerification: 'preferred', timeout: 60000
+    } });
+    const key = await crypto.subtle.importKey('spki', unb64(rec.spki), rec.alg === -7 ? { name: 'ECDSA', namedCurve: 'P-256' } : { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    const data = new Uint8Array(assertion.response.authenticatorData.byteLength + assertion.response.clientDataJSON.byteLength + 32);
+    const cdHash = new Uint8Array(await crypto.subtle.digest('SHA-256', assertion.response.clientDataJSON));
+    data.set(new Uint8Array(assertion.response.authenticatorData), 0);
+    data.set(cdHash, assertion.response.authenticatorData.byteLength);
+    const ok = await crypto.subtle.verify(rec.alg === -7 ? { name: 'ECDSA', hash: 'SHA-256' } : { name: 'RSASSA-PKCS1-v1_5' }, key, assertion.response.signature, data);
+    if (!ok) { lmError('パスキーの確認に失敗しました'); return false; }
+    sessionStorage.setItem(PK_SESSION, rec.name);
+    closeModal(); render();
+    return true;
+  } catch (e) {
+    if (e && e.name !== 'NotAllowedError') lmError('パスキーログインに失敗しました');
+    return false;
+  }
+}
+$('lmPasskey').addEventListener('click', () => { lmError(null); lmInfo(null); pkLoginFlow(); });
+$('pkRegisterBtn').addEventListener('click', pkRegister);
+$('pkDeleteBtn').addEventListener('click', () => {
+  pkMsg('');
+  try { localStorage.removeItem(PK_KEY); sessionStorage.removeItem(PK_SESSION); } catch (e) {}
+  pkMsg('パスキーの登録を削除しました', true); render();
+});
+render();
+</script>
+</body>
+</html>
