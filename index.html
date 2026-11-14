@@ -313,12 +313,22 @@ async function resolveScratchNo() {
   } catch (e) {}
   render();
 }
+async function syncScratchIndex() {
+  if (!fbUser || memberNo == null) return;
+  try {
+    const s = await getDoc(doc(db, 'users', fbUser.uid));
+    if (s.exists() && s.data().scratch && typeof s.data().no === 'number') {
+      await setDoc(doc(db, 'scratchIndex', s.data().scratch), { no: s.data().no });
+    }
+  } catch (e) {}
+}
 getRedirectResult(auth).catch(() => {});
 onAuthStateChanged(auth, async user => {
   fbUser = user; memberNo = null; linkedScratch = null; render();
   if (user) {
     try { memberNo = await ensureMemberNo(user); } catch (e) {}
     render();
+    syncScratchIndex();
     if (pendingScratchAttach) { pendingScratchAttach = false; await saveScratchLink(); }
     else loadLinkedScratch(user);
   }
@@ -506,6 +516,7 @@ async function saveScratchLink() {
     } catch (e) {}
     await setDoc(doc(db, 'users', fbUser.uid), { scratch: name }, { merge: true });
     linkedScratch = name;
+    syncScratchIndex();
     linkMsg('Scratch（' + name + '）を連携しました', true);
     renderLink();
   } catch (e) { linkMsg('Scratchの連携に失敗しました', false); }
