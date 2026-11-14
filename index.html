@@ -428,6 +428,7 @@ function renderLink() {
     }
     return;
   }
+  let html = '<p class="note" style="margin-bottom:6px">連携すると、同じアカウント（同じ会員番号）に別の方法でもログインできるようになります。</p>';
   const sOn = !!linkedScratch;
   html += '<div class="link-row"><span class="ms">stadia_controller</span><span class="lr-name">Scratch</span><span class="lr-status' + (sOn ? ' on' : '') + '">' + (sOn ? '連携済み（' + esc(linkedScratch) + '）' : '未連携') + '</span>'
     + (sOn ? '<button class="btn small ghost" id="unlinkScratchBtn" type="button">解除</button>' : '<button class="btn small" id="linkScratchBtn" type="button">連携する</button>') + '</div>';
@@ -436,7 +437,6 @@ function renderLink() {
     { pid: 'github.com', icon: 'code', name: 'GitHub' },
     { pid: 'password', icon: 'mail', name: 'メールアドレス' }
   ];
-  let html = '<p class="note" style="margin-bottom:6px">連携すると、同じアカウント（同じ会員番号）に別の方法でもログインできるようになります。</p>';
   rows.forEach(r => {
     const on = providerLinked(r.pid);
     html += '<div class="link-row"><span class="ms">' + r.icon + '</span><span class="lr-name">' + r.name + '</span><span class="lr-status' + (on ? ' on' : '') + '">' + (on ? '連携済み' : '未連携') + '</span>'
