@@ -296,7 +296,7 @@ async function ensureMemberNo(user) {
   });
   return no;
 }
-let linkedScratch = null, scratchLinkedNo = null, pendingScratchLink = false;
+let linkedScratch = null, scratchLinkedNo = null, pendingScratchLink = false, pendingScratchAttach = false;
 async function loadLinkedScratch(user) {
   linkedScratch = null;
   try { const s = await getDoc(doc(db, 'users', user.uid)); if (s.exists() && s.data().scratch) linkedScratch = s.data().scratch; } catch (e) {}
@@ -316,7 +316,12 @@ async function resolveScratchNo() {
 getRedirectResult(auth).catch(() => {});
 onAuthStateChanged(auth, async user => {
   fbUser = user; memberNo = null; linkedScratch = null; render();
-  if (user) { try { memberNo = await ensureMemberNo(user); } catch (e) {} render(); loadLinkedScratch(user); }
+  if (user) {
+    try { memberNo = await ensureMemberNo(user); } catch (e) {}
+    render();
+    if (pendingScratchAttach) { pendingScratchAttach = false; await saveScratchLink(); }
+    else loadLinkedScratch(user);
+  }
   else resolveScratchNo();
 });
 
@@ -407,7 +412,20 @@ function providerLinked(pid) { return !!(fbUser && fbUser.providerData || []).fi
 function renderLink() {
   const card = $('linkCard'); if (!card) return;
   if (!fbUser) {
-    card.innerHTML = '<p class="note">ログイン方法の連携は、Google / GitHub / メールアドレスのいずれかでログインしたときにご利用いただけます（パスキーは連携の対象外です）。</p>';
+    const sc = scratchUser();
+    if (sc) {
+      card.innerHTML = '<p class="note" style="margin-bottom:12px">Scratch（' + esc(sc) + '）でログイン中です。Google / GitHub / メールアドレスと連携すると、そのアカウント（会員番号）にScratchが紐付き、どの方法でも同じアカウントでログインできるようになります。</p>'
+        + '<div class="pk-row"><button class="btn small" id="attachGoogle" type="button"><span class="ms">account_circle</span>Googleと連携する</button>'
+        + '<button class="btn small" id="attachGithub" type="button"><span class="ms">code</span>GitHubと連携する</button></div>'
+        + '<div class="link-form"><input type="email" id="attachEmail" placeholder="メールアドレス" autocomplete="email"><input type="password" id="attachPassword" placeholder="パスワード（お持ちでない場合は新規作成されます）" autocomplete="current-password"><button class="btn small" id="attachEmailBtn" type="button">メールアドレスと連携する</button></div>'
+        + '<p class="pk-msg" id="attachMsg"></p>';
+      $('attachGoogle').addEventListener('click', () => doAttachSocial('google'));
+      $('attachGithub').addEventListener('click', () => doAttachSocial('github'));
+      $('attachEmailBtn').addEventListener('click', doAttachEmail);
+    } else {
+      card.innerHTML = '<p class="note" style="margin-bottom:12px">ログイン方法の連携は、ログインしたときにご利用いただけます（パスキーは連携の対象外です）。</p><button class="btn small" id="linkLoginBtn" type="button"><span class="ms">login</span>ログイン</button>';
+      $('linkLoginBtn').addEventListener('click', openModal);
+    }
     return;
   }
   const sOn = !!linkedScratch;
@@ -435,6 +453,37 @@ function renderLink() {
   card.querySelectorAll('[data-unlink]').forEach(b => b.addEventListener('click', () => doUnlink(b.getAttribute('data-unlink'))));
   const doBtn = $('linkEmailDo');
   if (doBtn) doBtn.addEventListener('click', doLinkEmail);
+}
+function attachMsg(text, ok) { const m = $('attachMsg'); if (!m) return; m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
+function doAttachSocial(kind) {
+  attachMsg('');
+  pendingScratchAttach = true;
+  const provider = kind === 'google' ? new GoogleAuthProvider() : new GithubAuthProvider();
+  signInWithPopup(auth, provider).catch(e => {
+    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
+      signInWithRedirect(auth, provider).catch(err => { pendingScratchAttach = false; attachMsg(linkFriendly(err), false); });
+    } else { pendingScratchAttach = false; attachMsg(linkFriendly(e), false); }
+  });
+}
+async function doAttachEmail() {
+  attachMsg('');
+  const email = $('attachEmail').value.trim(), pass = $('attachPassword').value;
+  if (!email || !pass) { attachMsg('メールアドレスとパスワードを入力してください', false); return; }
+  pendingScratchAttach = true;
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch (e1) {
+    if (e1 && (e1.code === 'auth/user-not-found' || e1.code === 'auth/invalid-credential')) {
+      try { await createUserWithEmailAndPassword(auth, email, pass); }
+      catch (e2) {
+        pendingScratchAttach = false;
+        attachMsg(e2 && e2.code === 'auth/email-already-in-use' ? 'そのメールアドレスは登録済みです。パスワードをご確認ください' : linkFriendly(e2), false);
+        return;
+      }
+    } else { pendingScratchAttach = false; attachMsg(linkFriendly(e1), false); return; }
+  }
+  fbUser = auth.currentUser;
+  if (pendingScratchAttach) { pendingScratchAttach = false; await saveScratchLink(); }
+  render();
 }
 function doLinkScratch() {
   linkMsg('');
