@@ -214,7 +214,7 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, runTransaction, getDoc, setDoc, updateDoc, deleteField, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = { apiKey: 'AIzaSyBfKW5cuKxXBFHWV1MRumSey8PPwgcCfvQ', authDomain: 'tororo-hp.firebaseapp.com', projectId: 'tororo-hp', storageBucket: 'tororo-hp.firebasestorage.app', messagingSenderId: '133948474364', appId: '1:133948474364:web:decac4c97ddd8f167ba879' };
 const app = initializeApp(firebaseConfig);
@@ -240,7 +240,7 @@ function identity() {
   const pk = pkUser();
   if (pk) return { name: pk, method: 'パスキーでログイン中', avatar: '', no: null };
   const sc = scratchUser();
-  if (sc) return { name: sc, method: 'Scratchでログイン中', avatar: 'https://cdn2.scratch.mit.edu/get_image/user/' + encodeURIComponent(sc) + '_76x76.png', no: null };
+  if (sc) return { name: sc, method: 'Scratchでログイン中', avatar: 'https://cdn2.scratch.mit.edu/get_image/user/' + encodeURIComponent(sc) + '_76x76.png', no: scratchLinkedNo };
   return null;
 }
 
@@ -286,20 +286,38 @@ async function ensureMemberNo(user) {
   const ref = doc(db, 'users', user.uid);
   const no = await runTransaction(db, async tx => {
     const snap = await tx.get(ref);
-    if (snap.exists() && typeof snap.data().memberNo === 'number') return snap.data().memberNo;
+    if (snap.exists() && typeof snap.data().no === 'number') return snap.data().no;
     const cref = doc(db, 'meta', 'counter');
     const csnap = await tx.get(cref);
-    const next = (csnap.exists() && typeof csnap.data().value === 'number' ? csnap.data().value : 0) + 1;
-    tx.set(cref, { value: next }, { merge: true });
-    tx.set(ref, { memberNo: next, createdAt: Date.now() }, { merge: true });
+    const next = (csnap.exists() && typeof csnap.data().count === 'number' ? csnap.data().count : 0) + 1;
+    tx.set(cref, { count: next }, { merge: true });
+    tx.set(ref, { no: next, createdAt: Date.now() }, { merge: true });
     return next;
   });
   return no;
 }
+let linkedScratch = null, scratchLinkedNo = null, pendingScratchLink = false;
+async function loadLinkedScratch(user) {
+  linkedScratch = null;
+  try { const s = await getDoc(doc(db, 'users', user.uid)); if (s.exists() && s.data().scratch) linkedScratch = s.data().scratch; } catch (e) {}
+  renderLink();
+}
+async function resolveScratchNo() {
+  scratchLinkedNo = null;
+  const name = scratchUser();
+  if (!name || fbUser) return;
+  try {
+    const q = query(collection(db, 'users'), where('scratch', '==', name));
+    const snap = await getDocs(q);
+    snap.forEach(d => { if (typeof d.data().no === 'number') scratchLinkedNo = d.data().no; });
+  } catch (e) {}
+  render();
+}
 getRedirectResult(auth).catch(() => {});
 onAuthStateChanged(auth, async user => {
-  fbUser = user; memberNo = null; render();
-  if (user) { try { memberNo = await ensureMemberNo(user); } catch (e) {} render(); }
+  fbUser = user; memberNo = null; linkedScratch = null; render();
+  if (user) { try { memberNo = await ensureMemberNo(user); } catch (e) {} render(); loadLinkedScratch(user); }
+  else resolveScratchNo();
 });
 
 /* modal */
@@ -360,8 +378,12 @@ $('lmReset').addEventListener('click', async () => {
 });
 $('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.login(); });
 try {
-  ScratchLogin.init({ onLogin: () => render(), onLogout: () => render() });
+  ScratchLogin.init({
+    onLogin: () => { if (pendingScratchLink) { pendingScratchLink = false; saveScratchLink(); } resolveScratchNo(); render(); },
+    onLogout: () => { scratchLinkedNo = null; render(); }
+  });
 } catch (e) {}
+resolveScratchNo();
 
 /* ログイン方法の連携 */
 function linkMsg(text, ok) { const m = $('linkMsg'); if (!m) return; m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
@@ -385,9 +407,12 @@ function providerLinked(pid) { return !!(fbUser && fbUser.providerData || []).fi
 function renderLink() {
   const card = $('linkCard'); if (!card) return;
   if (!fbUser) {
-    card.innerHTML = '<p class="note">ログイン方法の連携は、Google / GitHub / メールアドレスのいずれかでログインしたときにご利用いただけます（Scratchログイン・パスキーは連携の対象外です）。</p>';
+    card.innerHTML = '<p class="note">ログイン方法の連携は、Google / GitHub / メールアドレスのいずれかでログインしたときにご利用いただけます（パスキーは連携の対象外です）。</p>';
     return;
   }
+  const sOn = !!linkedScratch;
+  html += '<div class="link-row"><span class="ms">stadia_controller</span><span class="lr-name">Scratch</span><span class="lr-status' + (sOn ? ' on' : '') + '">' + (sOn ? '連携済み（' + esc(linkedScratch) + '）' : '未連携') + '</span>'
+    + (sOn ? '<button class="btn small ghost" id="unlinkScratchBtn" type="button">解除</button>' : '<button class="btn small" id="linkScratchBtn" type="button">連携する</button>') + '</div>';
   const rows = [
     { pid: 'google.com', icon: 'account_circle', name: 'Google' },
     { pid: 'github.com', icon: 'code', name: 'GitHub' },
@@ -402,12 +427,45 @@ function renderLink() {
   if (!providerLinked('password')) {
     html += '<div class="link-form" id="linkEmailForm" hidden><input type="email" id="linkEmail" placeholder="連携するメールアドレス" autocomplete="email"><input type="password" id="linkPassword" placeholder="設定するパスワード（6文字以上）" autocomplete="new-password"><button class="btn small" id="linkEmailDo" type="button">このメールアドレスを連携する</button></div>';
   }
-  html += '<p class="pk-msg" id="linkMsg"></p><p class="note" style="margin-top:8px">※ Scratchログインとパスキーは、この連携の対象外です（今まで通りお使いいただけます）。</p>';
+  html += '<p class="pk-msg" id="linkMsg"></p><p class="note" style="margin-top:8px">※ パスキーは、この連携の対象外です（今まで通りお使いいただけます）。Scratchを連携すると、Scratchでログインしたときにも会員番号が表示されます。</p>';
   card.innerHTML = html;
+  const lsb = $('linkScratchBtn'); if (lsb) lsb.addEventListener('click', doLinkScratch);
+  const usb = $('unlinkScratchBtn'); if (usb) usb.addEventListener('click', doUnlinkScratch);
   card.querySelectorAll('[data-link]').forEach(b => b.addEventListener('click', () => doLink(b.getAttribute('data-link'))));
   card.querySelectorAll('[data-unlink]').forEach(b => b.addEventListener('click', () => doUnlink(b.getAttribute('data-unlink'))));
   const doBtn = $('linkEmailDo');
   if (doBtn) doBtn.addEventListener('click', doLinkEmail);
+}
+function doLinkScratch() {
+  linkMsg('');
+  if (!fbUser) { linkMsg('連携には、先にGoogle / GitHub / メールアドレスでログインしてください', false); return; }
+  if (scratchUser()) { saveScratchLink(); return; }
+  pendingScratchLink = true;
+  linkMsg('Scratchログインの画面を開きました。認証を完了すると連携されます', true);
+  try { ScratchLogin.login(); } catch (e) { pendingScratchLink = false; linkMsg('Scratchログインを開けませんでした', false); }
+}
+async function saveScratchLink() {
+  const name = scratchUser();
+  if (!fbUser || !name) return;
+  try {
+    try {
+      const q = query(collection(db, 'users'), where('scratch', '==', name));
+      const snap = await getDocs(q);
+      let conflict = false;
+      snap.forEach(d => { if (d.id !== fbUser.uid) conflict = true; });
+      if (conflict) { linkMsg('そのScratchアカウントは、すでに別のとろIDに連携済みです', false); return; }
+    } catch (e) {}
+    await setDoc(doc(db, 'users', fbUser.uid), { scratch: name }, { merge: true });
+    linkedScratch = name;
+    linkMsg('Scratch（' + name + '）を連携しました', true);
+    renderLink();
+  } catch (e) { linkMsg('Scratchの連携に失敗しました', false); }
+}
+async function doUnlinkScratch() {
+  linkMsg('');
+  if (!fbUser) return;
+  try { await updateDoc(doc(db, 'users', fbUser.uid), { scratch: deleteField() }); linkedScratch = null; linkMsg('Scratchの連携を解除しました', true); renderLink(); }
+  catch (e) { linkMsg('連携の解除に失敗しました', false); }
 }
 async function doLink(pid) {
   linkMsg('');
