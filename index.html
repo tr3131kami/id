@@ -610,9 +610,10 @@ async function doDeleteAccount() {
   try {
     if (linkedScratch) { try { await deleteDoc(doc(db, 'scratchIndex', linkedScratch)); } catch (e) {} }
     try { await deleteDoc(doc(db, 'users', user.uid)); } catch (e) {}
+    delDone = true;
     await deleteUser(user);
     try { localStorage.removeItem(PK_KEY); sessionStorage.removeItem(PK_SESSION); } catch (e) {}
-    delReauthed = false; delDone = true;
+    delReauthed = false; render();
     alert('アカウントを削除しました。ご利用ありがとうございました。');
   } catch (e) {
     if (e && e.code === 'auth/requires-recent-login') { delReauthed = false; renderDelete(); delMsg('本人確認の有効期限が切れました。もう一度本人確認をしてください', false); }
