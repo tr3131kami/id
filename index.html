@@ -307,9 +307,8 @@ async function resolveScratchNo() {
   const name = scratchUser();
   if (!name || fbUser) return;
   try {
-    const q = query(collection(db, 'users'), where('scratch', '==', name));
-    const snap = await getDocs(q);
-    snap.forEach(d => { if (typeof d.data().no === 'number') scratchLinkedNo = d.data().no; });
+    const s = await getDoc(doc(db, 'scratchIndex', name));
+    if (s.exists() && typeof s.data().no === 'number') scratchLinkedNo = s.data().no;
   } catch (e) {}
   render();
 }
