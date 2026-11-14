@@ -139,15 +139,22 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
   <p>とろろぉーーーーID（とろID）のページです。対応サイトすべてで使える共通アカウントです。</p>
   <div><span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">読み込み中…</span></span></div>
 </header>
-
-<main class="wrap">
-<div id="viewTop">
-  <section class="sec" id="linkEmailBox" hidden>
+  <section class="sec wrap" style="margin-top:18px" id="linkEmailBox" hidden>
     <div class="card">
       <p class="note" style="margin-bottom:10px">ログインリンクが開かれました。確認のため、ログインに使ったメールアドレスを入力してください。</p>
       <div class="link-form"><input type="email" id="linkEmailInput" placeholder="メールアドレス" autocomplete="email"><button class="btn small" id="linkEmailGo" type="button">ログインを完了する</button></div>
     </div>
   </section>
+  <section class="sec wrap" style="margin-top:18px" id="pwResetBox" hidden>
+    <div class="card">
+      <p class="note" style="margin-bottom:10px">メール認証が完了しました。最後に、ログインに使うパスワードを設定してください。メール認証のたびにパスワードはリセットされるため、毎回設定が必要です（同じパスワードで大丈夫です）。</p>
+      <div class="link-form"><input type="password" id="pwResetInput" placeholder="パスワード（6文字以上）" autocomplete="new-password"><input type="password" id="pwResetInput2" placeholder="パスワード（確認）" autocomplete="new-password"><button class="btn small" id="pwResetGo" type="button">パスワードを設定してログインを完了する</button></div>
+      <p class="pk-msg" id="pwResetMsg"></p>
+    </div>
+  </section>
+
+<main class="wrap">
+<div id="viewTop">
   <section class="sec reveal">
     <div class="card" id="topCard"><p class="note">読み込み中…</p></div>
   </section>
@@ -230,7 +237,7 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
         <button class="lm-btn" id="lmEmailSignup" type="button">新規登録</button>
       </div>
       <button class="lm-btn" id="lmReset" type="button"><span class="ms">lock_reset</span>パスワードを忘れた場合</button>
-      <p class="lm-note">パスワードが合っていたら、メールにログイン用のリンクを送ります。リンクを開くとログインが完了します（2段階認証）。</p>
+      <p class="lm-note">パスワードが合っていたら、メールにログイン用のリンクを送ります。リンクを開いたあと、パスワードを設定するとログインが完了します（2段階認証）。</p>
     </div>
     <button class="lm-btn" id="lmPhoneBtn" type="button"><span class="ms">smartphone</span>電話番号でログイン</button>
     <div id="lmPhonePanel" hidden>
@@ -255,7 +262,7 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 <script src="https://tr3131kami.github.io/ScratchLoginSystem/scratch-login.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, reauthenticateWithPopup, reauthenticateWithCredential, deleteUser } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, reauthenticateWithPopup, reauthenticateWithCredential, deleteUser, updatePassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, doc, runTransaction, getDoc, setDoc, updateDoc, deleteField, deleteDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = { apiKey: 'AIzaSyBfKW5cuKxXBFHWV1MRumSey8PPwgcCfvQ', authDomain: 'tororo-hp.firebaseapp.com', projectId: 'tororo-hp', storageBucket: 'tororo-hp.firebasestorage.app', messagingSenderId: '133948474364', appId: '1:133948474364:web:decac4c97ddd8f167ba879' };
@@ -274,6 +281,10 @@ function pendingLink() { try { const p = JSON.parse(localStorage.getItem(PENDING
 function pendingExpired() { try { const p = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); return !!(p && p.ts && Date.now() - p.ts >= 60 * 60 * 1000); } catch (e) { return false; } }
 function setPendingLink(email) { try { localStorage.setItem(PENDING_KEY, JSON.stringify({ email: email, ts: Date.now() })); } catch (e) {} }
 function clearPendingLink() { try { localStorage.removeItem(PENDING_KEY); } catch (e) {} }
+const PWRESET_KEY = 'tororo_pw_reset';
+function pwResetNeeded() { try { return !!localStorage.getItem(PWRESET_KEY); } catch (e) { return false; } }
+function setPwResetNeeded() { try { localStorage.setItem(PWRESET_KEY, String(Date.now())); } catch (e) {} }
+function clearPwResetNeeded() { try { localStorage.removeItem(PWRESET_KEY); } catch (e) {} }
 function scratchUser() { try { return localStorage.getItem('sls_user') || null; } catch (e) { return null; } }
 const PK_KEY = 'tororo_passkey', PK_SESSION = 'tororo_pk_user';
 const pkSupported = !!window.PublicKeyCredential;
@@ -283,7 +294,7 @@ function pkUser() { try { return sessionStorage.getItem(PK_SESSION); } catch (e)
 function identity() {
   if (fbUser) {
     const provider = (fbUser.providerData[0] && fbUser.providerData[0].providerId) || '';
-    if (provider === 'password' && pendingLink()) return null;
+    if (provider === 'password' && (pendingLink() || pwResetNeeded())) return null;
     const method = provider === 'google.com' ? 'Googleでログイン中' : provider === 'github.com' ? 'GitHubでログイン中' : provider === 'phone' ? '電話番号でログイン中' : 'メールアドレスでログイン中';
     return { name: fbUser.displayName || fbUser.email || fbUser.phoneNumber || 'ユーザー', method, avatar: fbUser.photoURL || '', no: memberNo };
   }
@@ -311,6 +322,7 @@ function render() {
     card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:14px">ログインすると、ここに会員カードが表示されます。</p><button class="btn" id="cardLogin" type="button"><span class="ms">login</span>ログイン方法を選ぶ</button></div>';
     $('cardLogin').addEventListener('click', openModal);
   }
+  const prb = $('pwResetBox'); if (prb) prb.hidden = !(pwResetNeeded() && fbUser);
   renderTop();
   renderPk();
   renderLink();
@@ -322,6 +334,10 @@ function renderTop() {
   if (pend && fbUser) {
     card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:12px">パスワードが確認できました。' + esc(pend.email) + ' にログイン用のリンクを送信しました。メール内のリンクを開くとログインが完了します。</p><button class="btn small ghost" id="topPendingCancel" type="button">やめる（ログアウト）</button></div>';
     $('topPendingCancel').addEventListener('click', async () => { clearPendingLink(); await doLogout(); });
+    return;
+  }
+  if (pwResetNeeded() && fbUser) {
+    card.innerHTML = '<div class="center"><p class="note">メール認証が完了しました。ログインを完了するには、上の欄でパスワードを設定してください。</p></div>';
     return;
   }
   const idn = identity();
@@ -347,6 +363,7 @@ function pkMsg(text, ok) { const m = $('pkMsg'); m.textContent = text || ''; m.c
 async function doLogout() {
   try { await signOut(auth); } catch (e) {}
   try { localStorage.removeItem('sls_user'); localStorage.removeItem('sa_username'); sessionStorage.removeItem(PK_SESSION); } catch (e) {}
+  clearPwResetNeeded(); clearPendingLink();
   memberNo = null; render();
 }
 
@@ -468,6 +485,7 @@ async function emailPasswordStep(signup) {
     else await signInWithEmailAndPassword(auth, email, pw);
     await sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + location.search, handleCodeInApp: true });
     try { localStorage.setItem('tororo_email_for_link', email); } catch (e) {}
+    try { localStorage.setItem('tororo_link_purpose', 'login'); } catch (e) {}
     setPendingLink(email);
     closeModal(); render();
     alert('パスワードが確認できました。メールにログイン用のリンクを送信しました。リンクを開くとログインが完了します。');
@@ -513,8 +531,10 @@ let linkHref = '';
 async function completeEmailLink(email, href) {
   try {
     await signInWithEmailLink(auth, email, href || location.href);
-    try { localStorage.removeItem('tororo_email_for_link'); } catch (e) {}
+    let purpose = '';
+    try { purpose = localStorage.getItem('tororo_link_purpose') || ''; localStorage.removeItem('tororo_link_purpose'); localStorage.removeItem('tororo_email_for_link'); } catch (e) {}
     clearPendingLink();
+    if (purpose !== 'reauth') setPwResetNeeded();
     const q = new URLSearchParams(location.search).get('q');
     history.replaceState(null, '', location.pathname + (q ? '?q=' + q : ''));
   } catch (e) { alert('メールリンクでのログインに失敗しました：' + friendlyError(e)); }
@@ -528,6 +548,17 @@ if (isSignInWithEmailLink(auth, location.href)) {
 }
 const linkGo = $('linkEmailGo');
 if (linkGo) linkGo.addEventListener('click', () => { const v = $('linkEmailInput').value.trim(); if (!v) return; $('linkEmailBox').hidden = true; completeEmailLink(v, linkHref); });
+const prGo = $('pwResetGo');
+if (prGo) prGo.addEventListener('click', async () => {
+  const msg = $('pwResetMsg');
+  const say = (t, ok) => { if (msg) { msg.textContent = t; msg.className = 'pk-msg' + (ok ? ' ok' : ' ng'); } };
+  const p1 = $('pwResetInput').value, p2 = $('pwResetInput2').value;
+  if (!fbUser) { say('ログイン状態が確認できません。もう一度ログインしてください', false); return; }
+  if (p1.length < 6) { say('パスワードは6文字以上にしてください', false); return; }
+  if (p1 !== p2) { say('パスワードが一致しません', false); return; }
+  try { await updatePassword(fbUser, p1); clearPwResetNeeded(); render(); alert('ログインが完了しました'); }
+  catch (e) { say(friendlyError(e), false); }
+});
 $('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.login(); });
 try {
   ScratchLogin.init({
@@ -547,7 +578,7 @@ function renderDelete() {
     card.innerHTML = (delDone ? '<p class="pk-msg ok" style="margin-bottom:10px">アカウントを削除しました。ご利用ありがとうございました。</p>' : '') + '<p class="note">アカウントの削除は、Google / GitHub / メールアドレス / 電話番号でログインしたときにご利用いただけます。Scratchやパスキーでログイン中は削除できません（Scratchアカウント自体は削除されません）。</p><p class="pk-msg" id="delMsg"></p>';
     return;
   }
-  if ((fbUser.providerData[0] || {}).providerId === 'password' && pendingLink()) {
+  if ((fbUser.providerData[0] || {}).providerId === 'password' && (pendingLink() || pwResetNeeded())) {
     card.innerHTML = '<p class="note">メール認証の確認待ちです。メール内のリンクを開くと、削除ができるようになります。</p><p class="pk-msg" id="delMsg"></p>';
     return;
   }
@@ -599,7 +630,7 @@ function renderDelete() {
   const dlr = $('delLinkReauth'); if (dlr) dlr.addEventListener('click', async () => {
     try {
       await sendSignInLinkToEmail(auth, fbUser.email, { url: location.origin + location.pathname + '?q=setting', handleCodeInApp: true });
-      try { localStorage.setItem('tororo_email_for_link', fbUser.email); localStorage.setItem('tororo_reauth_delete', String(Date.now())); } catch (e) {}
+      try { localStorage.setItem('tororo_email_for_link', fbUser.email); localStorage.setItem('tororo_reauth_delete', String(Date.now())); localStorage.setItem('tororo_link_purpose', 'reauth'); } catch (e) {}
       delMsg('本人確認用のリンクをメールでお送りしました。リンクを開くと本人確認が完了します', true);
     } catch (e) { delMsg(friendlyError(e), false); }
   });
@@ -642,7 +673,7 @@ function linkFriendly(e) {
 function providerLinked(pid) { return !!(fbUser && fbUser.providerData || []).find(p => p.providerId === pid); }
 function renderLink() {
   const card = $('linkCard'); if (!card) return;
-  if (fbUser && (fbUser.providerData[0] || {}).providerId === 'password' && pendingLink()) {
+  if (fbUser && (fbUser.providerData[0] || {}).providerId === 'password' && (pendingLink() || pwResetNeeded())) {
     card.innerHTML = '<p class="note">メール認証の確認待ちです。メール内のリンクを開くと、連携が使えるようになります。</p>';
     return;
   }
