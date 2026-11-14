@@ -117,6 +117,15 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 .lm-note{font-size:.78rem;color:var(--muted);font-weight:700;margin-top:10px}
 .pk-msg{font-size:.86rem;font-weight:700;margin-top:10px;min-height:1.2em}
 .pk-msg.ok{color:#1e7d55}.pk-msg.err{color:#c2435e}
+.link-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1.5px dashed var(--line)}
+.link-row:last-of-type{border-bottom:none}
+.link-row .ms{font-size:24px;color:#9a86d8}
+.link-row .lr-name{font-weight:900}
+.link-row .lr-status{margin-left:auto;font-weight:900;font-size:.86rem;color:var(--muted);white-space:nowrap}
+.link-row .lr-status.on{color:#1e7d55}
+.link-form{margin-top:12px}
+.link-form input{width:100%;padding:.75em 1em;border:2px solid var(--line);border-radius:12px;font-family:inherit;font-size:.95rem;margin-bottom:10px;color:var(--text);background:#fff}
+.link-form input:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 4px rgba(196,181,253,.25)}
 </style>
 </head>
 <body>
@@ -143,6 +152,11 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
       </div>
       <p class="pk-msg" id="pkMsg"></p>
     </div>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head"><span class="ic"><span class="ms">link</span></span><h2>ログイン方法の連携</h2></div>
+    <div class="card" id="linkCard"><p class="note">読み込み中…</p></div>
   </section>
 
   <section class="sec reveal">
@@ -199,7 +213,7 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 <script src="https://tr3131kami.github.io/ScratchLoginSystem/scratch-login.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, doc, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = { apiKey: 'AIzaSyBfKW5cuKxXBFHWV1MRumSey8PPwgcCfvQ', authDomain: 'tororo-hp.firebaseapp.com', projectId: 'tororo-hp', storageBucket: 'tororo-hp.firebasestorage.app', messagingSenderId: '133948474364', appId: '1:133948474364:web:decac4c97ddd8f167ba879' };
@@ -248,6 +262,7 @@ function render() {
     $('cardLogin').addEventListener('click', openModal);
   }
   renderPk();
+  renderLink();
 }
 function renderPk() {
   const st = $('pkStatus'), rec = pkRecord(), idn = identity();
@@ -347,6 +362,77 @@ $('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.logi
 try {
   ScratchLogin.init({ onLogin: () => render(), onLogout: () => render() });
 } catch (e) {}
+
+/* ログイン方法の連携 */
+function linkMsg(text, ok) { const m = $('linkMsg'); if (!m) return; m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
+function linkFriendly(e) {
+  const c = (e && e.code) || '';
+  const map = {
+    'auth/credential-already-in-use': 'そのアカウントは、すでに別のとろIDで使われています',
+    'auth/email-already-in-use': 'そのメールアドレスは、すでに別のとろIDで使われています',
+    'auth/provider-already-linked': 'すでに連携済みです',
+    'auth/requires-recent-login': '安全のため、一度ログアウトして、もう一度ログインしてからお試しください',
+    'auth/popup-closed-by-user': '画面が閉じられました。もう一度お試しください',
+    'auth/cancelled-popup-request': '画面が閉じられました。もう一度お試しください',
+    'auth/weak-password': 'パスワードが短すぎます（6文字以上にしてください）',
+    'auth/invalid-email': 'メールアドレスの形式が違います',
+    'auth/no-such-provider': 'そのログイン方法は連携されていません',
+    'auth/network-request-failed': '通信に失敗しました。接続をご確認ください'
+  };
+  return map[c] || ('連携に失敗しました（' + (c || 'unknown') + '）');
+}
+function providerLinked(pid) { return !!(fbUser && fbUser.providerData || []).find(p => p.providerId === pid); }
+function renderLink() {
+  const card = $('linkCard'); if (!card) return;
+  if (!fbUser) {
+    card.innerHTML = '<p class="note">ログイン方法の連携は、Google / GitHub / メールアドレスのいずれかでログインしたときにご利用いただけます（Scratchログイン・パスキーは連携の対象外です）。</p>';
+    return;
+  }
+  const rows = [
+    { pid: 'google.com', icon: 'account_circle', name: 'Google' },
+    { pid: 'github.com', icon: 'code', name: 'GitHub' },
+    { pid: 'password', icon: 'mail', name: 'メールアドレス' }
+  ];
+  let html = '<p class="note" style="margin-bottom:6px">連携すると、同じアカウント（同じ会員番号）に別の方法でもログインできるようになります。</p>';
+  rows.forEach(r => {
+    const on = providerLinked(r.pid);
+    html += '<div class="link-row"><span class="ms">' + r.icon + '</span><span class="lr-name">' + r.name + '</span><span class="lr-status' + (on ? ' on' : '') + '">' + (on ? '連携済み' : '未連携') + '</span>'
+      + (on ? '<button class="btn small ghost" data-unlink="' + r.pid + '" type="button">解除</button>' : '<button class="btn small" data-link="' + r.pid + '" type="button">連携する</button>') + '</div>';
+  });
+  if (!providerLinked('password')) {
+    html += '<div class="link-form" id="linkEmailForm" hidden><input type="email" id="linkEmail" placeholder="連携するメールアドレス" autocomplete="email"><input type="password" id="linkPassword" placeholder="設定するパスワード（6文字以上）" autocomplete="new-password"><button class="btn small" id="linkEmailDo" type="button">このメールアドレスを連携する</button></div>';
+  }
+  html += '<p class="pk-msg" id="linkMsg"></p><p class="note" style="margin-top:8px">※ Scratchログインとパスキーは、この連携の対象外です（今まで通りお使いいただけます）。</p>';
+  card.innerHTML = html;
+  card.querySelectorAll('[data-link]').forEach(b => b.addEventListener('click', () => doLink(b.getAttribute('data-link'))));
+  card.querySelectorAll('[data-unlink]').forEach(b => b.addEventListener('click', () => doUnlink(b.getAttribute('data-unlink'))));
+  const doBtn = $('linkEmailDo');
+  if (doBtn) doBtn.addEventListener('click', doLinkEmail);
+}
+async function doLink(pid) {
+  linkMsg('');
+  if (pid === 'password') { const f = $('linkEmailForm'); if (f) f.hidden = false; return; }
+  const provider = pid === 'google.com' ? new GoogleAuthProvider() : new GithubAuthProvider();
+  try { await linkWithPopup(auth.currentUser, provider); fbUser = auth.currentUser; linkMsg('連携しました', true); renderLink(); render(); }
+  catch (e) {
+    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
+      linkWithRedirect(auth.currentUser, provider).catch(err => linkMsg(linkFriendly(err), false));
+    } else linkMsg(linkFriendly(e), false);
+  }
+}
+async function doLinkEmail() {
+  linkMsg('');
+  const email = $('linkEmail').value.trim(), pass = $('linkPassword').value;
+  if (!email || !pass) { linkMsg('メールアドレスとパスワードを入力してください', false); return; }
+  try { await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(email, pass)); fbUser = auth.currentUser; linkMsg('メールアドレスを連携しました', true); renderLink(); render(); }
+  catch (e) { linkMsg(linkFriendly(e), false); }
+}
+async function doUnlink(pid) {
+  linkMsg('');
+  if (fbUser.providerData.length <= 1) { linkMsg('最後のログイン方法は解除できません', false); return; }
+  try { await unlink(auth.currentUser, pid); fbUser = auth.currentUser; linkMsg('連携を解除しました', true); renderLink(); render(); }
+  catch (e) { linkMsg(linkFriendly(e), false); }
+}
 
 /* passkey (yt-hpと共通の保存形式: 同じドメインのサイト間で使えます) */
 const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
