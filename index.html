@@ -102,7 +102,11 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 .lm-btn:hover{border-color:var(--accent2);background:#fbfaff;transform:translateY(-1px);box-shadow:0 6px 14px rgba(196,181,253,.25)}
 .lm-btn{transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
 .lm-btn:active{transform:translateY(0)}
-#lmEmailLogin{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(255,184,209,.4)}
+#lmEmailLogin,#lmEmailSend,#lmPhoneLogin{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(255,184,209,.4)}
+#loginModal [hidden]{display:none!important}
+#delCard [hidden]{display:none!important}
+.btn.danger{background:#f43f5e;color:#fff;box-shadow:0 8px 18px rgba(244,63,94,.35)}
+#delCard input{width:100%;padding:.75em 1em;border:2px solid var(--line);border-radius:12px;font-family:inherit;font-size:.95rem;margin-bottom:10px;color:var(--text);background:#fff}
 .lm-box input{transition:border-color .15s,box-shadow .15s}
 .lm-box input:focus{box-shadow:0 0 0 4px rgba(196,181,253,.25)}
 .lm-btn .ms{color:#9a86d8}
@@ -160,12 +164,18 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
   </section>
 
   <section class="sec reveal">
+    <div class="sec-head"><span class="ic"><span class="ms">person_remove</span></span><h2>アカウントの削除</h2></div>
+    <div class="card" id="delCard"><p class="note">読み込み中…</p></div>
+  </section>
+
+  <section class="sec reveal">
     <div class="sec-head"><span class="ic"><span class="ms">login</span></span><h2>ログイン方法</h2></div>
     <div class="methods">
       <div class="method"><span class="ms">stadia_controller</span>Scratch<small>ScratchLoginSystem</small></div>
       <div class="method"><span class="ms">account_circle</span>Google<small>Googleアカウント</small></div>
       <div class="method"><span class="ms">code</span>GitHub<small>GitHubアカウント</small></div>
-      <div class="method"><span class="ms">mail</span>メールアドレス<small>新規登録・再設定OK</small></div>
+      <div class="method"><span class="ms">mail</span>メールアドレス<small>リンクでログイン</small></div>
+      <div class="method"><span class="ms">smartphone</span>電話番号<small>SMSコードでログイン</small></div>
       <div class="method"><span class="ms">passkey</span>パスキー<small>登録した端末のみ</small></div>
     </div>
   </section>
@@ -192,14 +202,22 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
     <button class="lm-btn" id="lmGoogle" type="button"><span class="ms">account_circle</span>Googleでログイン</button>
     <button class="lm-btn" id="lmGithub" type="button"><span class="ms">code</span>GitHubでログイン</button>
     <button class="lm-btn" id="lmPasskey" type="button"><span class="ms">passkey</span>パスキーでログイン</button>
-    <div class="lm-or">または メールアドレスで</div>
-    <input type="email" id="lmEmail" placeholder="メールアドレス" autocomplete="email">
-    <input type="password" id="lmPassword" placeholder="パスワード" autocomplete="current-password">
-    <div class="lm-row">
-      <button class="lm-btn" id="lmEmailLogin" type="button">ログイン</button>
-      <button class="lm-btn" id="lmEmailSignup" type="button">新規登録</button>
+    <button class="lm-btn" id="lmEmailBtn" type="button"><span class="ms">mail</span>メールアドレスでログイン</button>
+    <div id="lmEmailPanel" hidden>
+      <input type="email" id="lmEmail" placeholder="メールアドレス" autocomplete="email">
+      <button class="lm-btn" id="lmEmailSend" type="button">ログインリンクを送信</button>
+      <p class="lm-note">メールに届くリンクを開くとログインできます。初めての方も、リンクを開くだけで登録できます。</p>
     </div>
-    <button class="lm-btn" id="lmReset" type="button"><span class="ms">lock_reset</span>パスワードを忘れた場合</button>
+    <button class="lm-btn" id="lmPhoneBtn" type="button"><span class="ms">smartphone</span>電話番号でログイン</button>
+    <div id="lmPhonePanel" hidden>
+      <input type="tel" id="lmPhone" placeholder="電話番号（例：09012345678）" autocomplete="tel">
+      <button class="lm-btn" id="lmPhoneSend" type="button">SMSでコードを送信</button>
+      <div id="lmPhoneCodeWrap" hidden>
+        <input type="text" id="lmPhoneCode" placeholder="SMSで届いた6桁のコード" inputmode="numeric" autocomplete="one-time-code">
+        <button class="lm-btn" id="lmPhoneLogin" type="button">コードでログイン</button>
+      </div>
+      <div id="lmRecaptcha"></div>
+    </div>
     <button class="lm-btn lm-close" id="lmClose" type="button">閉じる</button>
     <p class="lm-note">Scratchログインは ScratchLoginSystem（suzunokana × とろろぉーーーー）を使用します。パスキーは登録した端末でのみご利用いただけます。</p>
   </div>
@@ -213,8 +231,8 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 <script src="https://tr3131kami.github.io/ScratchLoginSystem/scratch-login.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, runTransaction, getDoc, setDoc, updateDoc, deleteField, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, reauthenticateWithPopup, reauthenticateWithCredential, deleteUser } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, runTransaction, getDoc, setDoc, updateDoc, deleteField, deleteDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = { apiKey: 'AIzaSyBfKW5cuKxXBFHWV1MRumSey8PPwgcCfvQ', authDomain: 'tororo-hp.firebaseapp.com', projectId: 'tororo-hp', storageBucket: 'tororo-hp.firebasestorage.app', messagingSenderId: '133948474364', appId: '1:133948474364:web:decac4c97ddd8f167ba879' };
 const app = initializeApp(firebaseConfig);
@@ -234,8 +252,8 @@ function pkUser() { try { return sessionStorage.getItem(PK_SESSION); } catch (e)
 function identity() {
   if (fbUser) {
     const provider = (fbUser.providerData[0] && fbUser.providerData[0].providerId) || '';
-    const method = provider === 'google.com' ? 'Googleでログイン中' : provider === 'github.com' ? 'GitHubでログイン中' : 'メールアドレスでログイン中';
-    return { name: fbUser.displayName || fbUser.email || 'ユーザー', method, avatar: fbUser.photoURL || '', no: memberNo };
+    const method = provider === 'google.com' ? 'Googleでログイン中' : provider === 'github.com' ? 'GitHubでログイン中' : provider === 'phone' ? '電話番号でログイン中' : 'メールアドレスでログイン中';
+    return { name: fbUser.displayName || fbUser.email || fbUser.phoneNumber || 'ユーザー', method, avatar: fbUser.photoURL || '', no: memberNo };
   }
   const pk = pkUser();
   if (pk) return { name: pk, method: 'パスキーでログイン中', avatar: '', no: null };
@@ -255,7 +273,7 @@ function render() {
     const av = idn.avatar ? '<img src="' + esc(idn.avatar) + '" alt="">' : '<span class="avatar-fallback"><span class="ms">person</span></span>';
     card.innerHTML = '<div class="id-card">' + av + '<div class="who"><div class="name">' + esc(idn.name) + '</div><div class="meta">' + esc(idn.method) + '</div></div><div class="no"><div class="label">会員No.</div><div class="num">' + noText + '</div></div></div>'
       + '<div class="pk-row"><button class="btn small ghost" id="cardLogout" type="button"><span class="ms">logout</span>ログアウト</button></div>'
-      + (idn.no == null ? '<p class="note" style="margin-top:10px">※ 会員No.は Google / GitHub / メールアドレスでログインしたときに発行されます。</p>' : '');
+      + (idn.no == null ? '<p class="note" style="margin-top:10px">※ 会員No.は Google / GitHub / メールアドレス / 電話番号でログインしたときに発行されます。</p>' : '');
     $('cardLogout').addEventListener('click', doLogout);
   } else {
     card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:14px">ログインすると、ここに会員カードが表示されます。</p><button class="btn" id="cardLogin" type="button"><span class="ms">login</span>ログイン方法を選ぶ</button></div>';
@@ -263,6 +281,7 @@ function render() {
   }
   renderPk();
   renderLink();
+  renderDelete();
 }
 function renderPk() {
   const st = $('pkStatus'), rec = pkRecord(), idn = identity();
@@ -338,7 +357,7 @@ onAuthStateChanged(auth, async user => {
 function lmShow(el, msg) { const e = $(el); if (msg) { e.textContent = msg; e.style.display = 'block'; } else { e.style.display = 'none'; } }
 function lmError(msg) { lmShow('lmError', msg); if (msg) lmShow('lmInfo', null); }
 function lmInfo(msg) { lmShow('lmInfo', msg); if (msg) lmShow('lmError', null); }
-function openModal() { lmError(null); lmInfo(null); $('loginModal').classList.add('open'); }
+function openModal() { lmError(null); lmInfo(null); const ep = $('lmEmailPanel'), pp = $('lmPhonePanel'), cw = $('lmPhoneCodeWrap'); if (ep) ep.hidden = true; if (pp) pp.hidden = true; if (cw) cw.hidden = true; $('loginModal').classList.add('open'); }
 function closeModal() { $('loginModal').classList.remove('open'); }
 $('lmClose').addEventListener('click', closeModal);
 $('loginModal').addEventListener('click', e => { if (e.target === $('loginModal')) closeModal(); });
@@ -359,7 +378,17 @@ function friendlyError(e) {
     'auth/account-exists-with-different-credential': 'このメールアドレスは別の方法で登録済みです。別のログイン方法をお試しください',
     'auth/unauthorized-domain': 'このサイトのドメインが許可されていません',
     'auth/too-many-requests': '試行回数が多すぎます。しばらく待ってからお試しください',
-    'auth/network-request-failed': '通信に失敗しました。接続をご確認ください'
+    'auth/network-request-failed': '通信に失敗しました。接続をご確認ください',
+    'auth/invalid-phone-number': '電話番号の形式が違います',
+    'auth/missing-phone-number': '電話番号を入力してください',
+    'auth/invalid-verification-code': 'コードが違います',
+    'auth/missing-verification-code': 'コードを入力してください',
+    'auth/code-expired': 'コードの期限が切れています。もう一度送信してください',
+    'auth/session-expired': 'コードの期限が切れています。もう一度送信してください',
+    'auth/quota-exceeded': 'SMSの送信上限に達しました。時間をおいてお試しください',
+    'auth/captcha-check-failed': '認証チェックに失敗しました。もう一度お試しください',
+    'auth/expired-action-code': 'リンクの期限が切れています。もう一度送信してください',
+    'auth/invalid-action-code': 'リンクが無効です。もう一度送信してください'
   };
   return map[c] || ('ログインに失敗しました（' + (c || 'unknown') + '）');
 }
@@ -373,23 +402,56 @@ function socialLogin(provider, label) {
 }
 $('lmGoogle').addEventListener('click', () => socialLogin(new GoogleAuthProvider(), 'Google'));
 $('lmGithub').addEventListener('click', () => socialLogin(new GithubAuthProvider(), 'GitHub'));
-$('lmEmailLogin').addEventListener('click', async () => {
-  lmError(null); lmInfo(null);
-  try { await signInWithEmailAndPassword(auth, $('lmEmail').value.trim(), $('lmPassword').value); closeModal(); }
-  catch (e) { lmError(friendlyError(e)); }
-});
-$('lmEmailSignup').addEventListener('click', async () => {
-  lmError(null); lmInfo(null);
-  try { await createUserWithEmailAndPassword(auth, $('lmEmail').value.trim(), $('lmPassword').value); closeModal(); }
-  catch (e) { lmError(friendlyError(e)); }
-});
-$('lmReset').addEventListener('click', async () => {
+$('lmEmailBtn').addEventListener('click', () => { const p = $('lmEmailPanel'); p.hidden = !p.hidden; if (!p.hidden) $('lmPhonePanel').hidden = true; });
+$('lmPhoneBtn').addEventListener('click', () => { const p = $('lmPhonePanel'); p.hidden = !p.hidden; if (!p.hidden) $('lmEmailPanel').hidden = true; });
+$('lmEmailSend').addEventListener('click', async () => {
   lmError(null); lmInfo(null);
   const email = $('lmEmail').value.trim();
-  if (!email) { lmError('まずメールアドレスを入力してください'); return; }
-  try { await sendPasswordResetEmail(auth, email); lmInfo('パスワード再設定のメールをお送りしました。メールをご確認ください'); }
+  if (!email) { lmError('メールアドレスを入力してください'); return; }
+  try {
+    await sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname, handleCodeInApp: true });
+    try { localStorage.setItem('tororo_email_for_link', email); } catch (e) {}
+    lmInfo('ログインリンクをメールでお送りしました。届いたメールのリンクを開いてください');
+  } catch (e) { lmError(friendlyError(e)); }
+});
+function toE164(v) {
+  const d = String(v || '').replace(/[\s\-()]/g, '');
+  if (/^0\d{9,10}$/.test(d)) return '+81' + d.slice(1);
+  if (/^\+81\d{9,10}$/.test(d)) return d;
+  if (/^81\d{9,10}$/.test(d)) return '+' + d;
+  if (/^\+\d{8,15}$/.test(d)) return d;
+  return null;
+}
+let lmVerifier = null, lmConfirmation = null;
+function getLmVerifier() { if (!lmVerifier) lmVerifier = new RecaptchaVerifier(auth, 'lmRecaptcha', { size: 'invisible' }); return lmVerifier; }
+$('lmPhoneSend').addEventListener('click', async () => {
+  lmError(null); lmInfo(null);
+  const e164 = toE164($('lmPhone').value);
+  if (!e164) { lmError('電話番号の形式が違います（例：09012345678）'); return; }
+  try {
+    lmConfirmation = await signInWithPhoneNumber(auth, e164, getLmVerifier());
+    $('lmPhoneCodeWrap').hidden = false;
+    lmInfo('SMSでコードを送信しました。届いたコードを入力してください');
+  } catch (e) { try { if (lmVerifier) { lmVerifier.clear(); lmVerifier = null; } } catch (err) {} lmError(friendlyError(e)); }
+});
+$('lmPhoneLogin').addEventListener('click', async () => {
+  lmError(null); lmInfo(null);
+  if (!lmConfirmation) { lmError('先に「SMSでコードを送信」を押してください'); return; }
+  try { await lmConfirmation.confirm($('lmPhoneCode').value.trim()); closeModal(); }
   catch (e) { lmError(friendlyError(e)); }
 });
+/* email link sign-in completion */
+if (isSignInWithEmailLink(auth, location.href)) {
+  let linkEmail = null;
+  try { linkEmail = localStorage.getItem('tororo_email_for_link'); } catch (e) {}
+  if (!linkEmail) linkEmail = window.prompt('ログインに使ったメールアドレスを入力してください');
+  if (linkEmail) {
+    signInWithEmailLink(auth, linkEmail, location.href).then(() => {
+      try { localStorage.removeItem('tororo_email_for_link'); } catch (e) {}
+      history.replaceState(null, '', location.pathname);
+    }).catch(e => { setTimeout(() => alert('メールリンクでのログインに失敗しました：' + friendlyError(e)), 400); });
+  }
+}
 $('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.login(); });
 try {
   ScratchLogin.init({
@@ -398,6 +460,79 @@ try {
   });
 } catch (e) {}
 resolveScratchNo();
+
+/* アカウントの削除 */
+let delReauthed = false, delVerifier = null, delVerifyId = null;
+function delMsg(text, ok) { const m = $('delMsg'); if (m) { m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); } }
+function renderDelete() {
+  const card = $('delCard'); if (!card) return;
+  if (!fbUser) {
+    delReauthed = false;
+    card.innerHTML = '<p class="note">アカウントの削除は、Google / GitHub / メールアドレス / 電話番号でログインしたときにご利用いただけます。Scratchやパスキーでログイン中は削除できません（Scratchアカウント自体は削除されません）。</p><p class="pk-msg" id="delMsg"></p>';
+    return;
+  }
+  const providers = fbUser.providerData.map(p => p.providerId);
+  let reauth = '';
+  if (providers.includes('google.com')) reauth += '<button class="btn small ghost" id="delReGoogle" type="button"><span class="ms">account_circle</span>Googleで本人確認</button>';
+  if (providers.includes('github.com')) reauth += '<button class="btn small ghost" id="delReGithub" type="button"><span class="ms">code</span>GitHubで本人確認</button>';
+  if (providers.includes('phone')) reauth += '<button class="btn small ghost" id="delPhoneSend" type="button"><span class="ms">smartphone</span>SMSでコードを送信</button><span id="delPhoneWrap" hidden><input type="text" id="delPhoneCode" placeholder="SMSで届いた6桁のコード" inputmode="numeric"><button class="btn small" id="delPhoneConfirm" type="button">コードで本人確認</button></span><span id="delRecaptcha"></span>';
+  if (providers.includes('password')) reauth += '<input type="password" id="delPassword" placeholder="パスワード" autocomplete="current-password"><button class="btn small ghost" id="delRePassword" type="button">パスワードで本人確認</button><button class="btn small ghost" id="delSkipReauth" type="button">ログイン直後です（確認を省略）</button>';
+  let html = '<p class="note" style="margin-bottom:10px">アカウントを削除すると、会員番号とログイン方法の連携情報が消えます。元に戻すことはできません。再登録した場合は、新しい会員番号になります。</p>';
+  if (delReauthed) {
+    html += '<p class="note" style="margin-bottom:10px">本人確認ができました。本当に削除する場合は、下のボタンを押してください。</p><div class="pk-row"><button class="btn small danger" id="delFinal" type="button"><span class="ms">person_remove</span>本当にアカウントを削除する</button><button class="btn small ghost" id="delCancel" type="button">やめる</button></div>';
+  } else {
+    html += '<div class="pk-row"><button class="btn small danger" id="delStart" type="button"><span class="ms">person_remove</span>アカウントを削除する</button></div><div id="delReauth" hidden><p class="note" style="margin:10px 0">安全のため、本人確認をしてください。</p><div class="pk-row">' + reauth + '</div></div>';
+  }
+  html += '<p class="pk-msg" id="delMsg"></p>';
+  card.innerHTML = html;
+  if (delReauthed) {
+    $('delCancel').addEventListener('click', () => { delReauthed = false; renderDelete(); });
+    $('delFinal').addEventListener('click', doDeleteAccount);
+    return;
+  }
+  $('delStart').addEventListener('click', () => { $('delReauth').hidden = false; $('delStart').disabled = true; });
+  const dg = $('delReGoogle'); if (dg) dg.addEventListener('click', async () => { try { await reauthenticateWithPopup(fbUser, new GoogleAuthProvider()); delReauthed = true; renderDelete(); delMsg('本人確認ができました', true); } catch (e) { delMsg(friendlyError(e), false); } });
+  const dh = $('delReGithub'); if (dh) dh.addEventListener('click', async () => { try { await reauthenticateWithPopup(fbUser, new GithubAuthProvider()); delReauthed = true; renderDelete(); delMsg('本人確認ができました', true); } catch (e) { delMsg(friendlyError(e), false); } });
+  const dps = $('delPhoneSend'); if (dps) dps.addEventListener('click', async () => {
+    try {
+      if (!delVerifier) delVerifier = new RecaptchaVerifier(auth, 'delRecaptcha', { size: 'invisible' });
+      const provider = new PhoneAuthProvider(auth);
+      delVerifyId = await provider.verifyPhoneNumber(fbUser.phoneNumber, delVerifier);
+      $('delPhoneWrap').hidden = false;
+      delMsg('SMSでコードを送信しました', true);
+    } catch (e) { delMsg(friendlyError(e), false); }
+  });
+  const dpc = $('delPhoneConfirm'); if (dpc) dpc.addEventListener('click', async () => {
+    try {
+      const cred = PhoneAuthProvider.credential(delVerifyId, $('delPhoneCode').value.trim());
+      await reauthenticateWithCredential(fbUser, cred);
+      delReauthed = true; renderDelete(); delMsg('本人確認ができました', true);
+    } catch (e) { delMsg(friendlyError(e), false); }
+  });
+  const drp = $('delRePassword'); if (drp) drp.addEventListener('click', async () => {
+    try {
+      const cred = EmailAuthProvider.credential(fbUser.email, $('delPassword').value);
+      await reauthenticateWithCredential(fbUser, cred);
+      delReauthed = true; renderDelete(); delMsg('本人確認ができました', true);
+    } catch (e) { delMsg(friendlyError(e), false); }
+  });
+  const dsr = $('delSkipReauth'); if (dsr) dsr.addEventListener('click', () => { delReauthed = true; renderDelete(); delMsg('削除に進みます。ログインから時間がたっていると、削除のときにエラーになることがあります', true); });
+}
+async function doDeleteAccount() {
+  const user = fbUser; if (!user) return;
+  delMsg('削除しています…', true);
+  try {
+    if (linkedScratch) { try { await deleteDoc(doc(db, 'scratchIndex', linkedScratch)); } catch (e) {} }
+    try { await deleteDoc(doc(db, 'users', user.uid)); } catch (e) {}
+    await deleteUser(user);
+    try { localStorage.removeItem(PK_KEY); sessionStorage.removeItem(PK_SESSION); } catch (e) {}
+    delReauthed = false;
+    alert('アカウントを削除しました。ご利用ありがとうございました。');
+  } catch (e) {
+    if (e && e.code === 'auth/requires-recent-login') { delReauthed = false; renderDelete(); delMsg('本人確認の有効期限が切れました。もう一度本人確認をしてください', false); }
+    else delMsg('削除に失敗しました（' + ((e && e.code) || 'unknown') + '）', false);
+  }
+}
 
 /* ログイン方法の連携 */
 function linkMsg(text, ok) { const m = $('linkMsg'); if (!m) return; m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
