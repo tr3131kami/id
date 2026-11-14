@@ -104,6 +104,8 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 .lm-btn:active{transform:translateY(0)}
 #lmEmailLogin,#lmEmailSend,#lmPhoneLogin{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(255,184,209,.4)}
 #loginModal [hidden]{display:none!important}
+.lm-captcha{display:flex;justify-content:center;margin:4px 0 10px;min-height:78px}
+#loginModal .lm-btn:disabled{opacity:.45;cursor:not-allowed}
 #delCard [hidden]{display:none!important}
 .btn.danger{background:#f43f5e;color:#fff;box-shadow:0 8px 18px rgba(244,63,94,.35)}
 #delCard input{width:100%;padding:.75em 1em;border:2px solid var(--line);border-radius:12px;font-family:inherit;font-size:.95rem;margin-bottom:10px;color:var(--text);background:#fff}
@@ -224,11 +226,13 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
     <p class="lm-sub">対応サイト共通のアカウントでログインします。いずれかの方法をお選びください。</p>
     <div class="lm-error" id="lmError"></div>
     <div class="lm-info" id="lmInfo"></div>
-    <button class="lm-btn" id="lmScratch" type="button"><span class="ms">stadia_controller</span>Scratchでログイン</button>
-    <button class="lm-btn" id="lmGoogle" type="button"><span class="ms">account_circle</span>Googleでログイン</button>
-    <button class="lm-btn" id="lmGithub" type="button"><span class="ms">code</span>GitHubでログイン</button>
-    <button class="lm-btn" id="lmPasskey" type="button"><span class="ms">passkey</span>パスキーでログイン</button>
-    <button class="lm-btn" id="lmEmailBtn" type="button"><span class="ms">mail</span>メールアドレスでログイン</button>
+    <div class="lm-captcha" id="lmCaptcha"></div>
+    <p class="lm-note" id="lmCaptchaNote">ログインするには、まず上の「私はロボットではありません」にチェックしてください。</p>
+    <button class="lm-btn" id="lmScratch" type="button" disabled><span class="ms">stadia_controller</span>Scratchでログイン</button>
+    <button class="lm-btn" id="lmGoogle" type="button" disabled><span class="ms">account_circle</span>Googleでログイン</button>
+    <button class="lm-btn" id="lmGithub" type="button" disabled><span class="ms">code</span>GitHubでログイン</button>
+    <button class="lm-btn" id="lmPasskey" type="button" disabled><span class="ms">passkey</span>パスキーでログイン</button>
+    <button class="lm-btn" id="lmEmailBtn" type="button" disabled><span class="ms">mail</span>メールアドレスでログイン</button>
     <div id="lmEmailPanel" hidden>
       <input type="email" id="lmEmail" placeholder="メールアドレス" autocomplete="email">
       <input type="password" id="lmPassword" placeholder="パスワード" autocomplete="current-password">
@@ -239,7 +243,7 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
       <button class="lm-btn" id="lmReset" type="button"><span class="ms">lock_reset</span>パスワードを忘れた場合</button>
       <p class="lm-note">パスワードが合っていたら、メールにログイン用のリンクを送ります。リンクを開いたあと、パスワードを設定するとログインが完了します（2段階認証）。</p>
     </div>
-    <button class="lm-btn" id="lmPhoneBtn" type="button"><span class="ms">smartphone</span>電話番号でログイン</button>
+    <button class="lm-btn" id="lmPhoneBtn" type="button" disabled><span class="ms">smartphone</span>電話番号でログイン</button>
     <div id="lmPhonePanel" hidden>
       <input type="tel" id="lmPhone" placeholder="電話番号（例：09012345678）" autocomplete="tel">
       <button class="lm-btn" id="lmPhoneSend" type="button">SMSでコードを送信</button>
@@ -260,6 +264,7 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 </script>
 
 <script src="https://tr3131kami.github.io/ScratchLoginSystem/scratch-login.js"></script>
+<script src="https://www.google.com/recaptcha/api.js?render=explicit&hl=ja" async defer></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, linkWithPopup, linkWithRedirect, linkWithCredential, EmailAuthProvider, unlink, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, reauthenticateWithPopup, reauthenticateWithCredential, deleteUser, updatePassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -428,7 +433,20 @@ onAuthStateChanged(auth, async user => {
 function lmShow(el, msg) { const e = $(el); if (msg) { e.textContent = msg; e.style.display = 'block'; } else { e.style.display = 'none'; } }
 function lmError(msg) { lmShow('lmError', msg); if (msg) lmShow('lmInfo', null); }
 function lmInfo(msg) { lmShow('lmInfo', msg); if (msg) lmShow('lmError', null); }
-function openModal() { lmError(null); lmInfo(null); const ep = $('lmEmailPanel'), pp = $('lmPhonePanel'), cw = $('lmPhoneCodeWrap'); if (ep) ep.hidden = true; if (pp) pp.hidden = true; if (cw) cw.hidden = true; $('loginModal').classList.add('open'); }
+const RC_SITE_KEY = '6LdM-B8uAAAAAO_cTgYfgtVkm2QeyTVnt3Oojt-1';
+let rcWidget = null;
+function rcSetEnabled(on) {
+  ['lmScratch', 'lmGoogle', 'lmGithub', 'lmEmailBtn', 'lmPhoneBtn', 'lmPasskey'].forEach(id => { const b = $(id); if (b) b.disabled = !on; });
+  const note = $('lmCaptchaNote'); if (note) note.style.display = on ? 'none' : '';
+}
+function rcEnsure() {
+  if (!window.grecaptcha || !grecaptcha.render) { setTimeout(rcEnsure, 300); return; }
+  if (rcWidget === null) {
+    try { rcWidget = grecaptcha.render('lmCaptcha', { sitekey: RC_SITE_KEY, callback: () => rcSetEnabled(true), 'expired-callback': () => rcSetEnabled(false), 'error-callback': () => rcSetEnabled(false) }); } catch (e) {}
+  } else { try { grecaptcha.reset(rcWidget); } catch (e) {} }
+  rcSetEnabled(false);
+}
+function openModal() { lmError(null); lmInfo(null); rcEnsure(); const ep = $('lmEmailPanel'), pp = $('lmPhonePanel'), cw = $('lmPhoneCodeWrap'); if (ep) ep.hidden = true; if (pp) pp.hidden = true; if (cw) cw.hidden = true; $('loginModal').classList.add('open'); }
 function closeModal() { $('loginModal').classList.remove('open'); }
 $('lmClose').addEventListener('click', closeModal);
 $('loginModal').addEventListener('click', e => { if (e.target === $('loginModal')) closeModal(); });
