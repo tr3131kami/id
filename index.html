@@ -72,13 +72,39 @@ a{color:inherit}
 .method small{display:block;color:var(--muted);font-weight:700;font-size:.78rem;margin-top:2px}
 footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:700;font-size:.88rem}
 /* login modal */
-.lm-overlay{position:fixed;inset:0;background:rgba(74,69,83,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
-.lm-overlay.open{display:flex}
-.lm-box{background:#fff;border-radius:22px;max-width:400px;width:100%;padding:26px;box-shadow:0 24px 60px rgba(74,69,83,.3);max-height:92vh;overflow:auto}
+.lm-overlay{position:fixed;inset:0;background:rgba(74,69,83,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
+.lm-overlay.open{display:flex;animation:lmFade .25s ease both}
+.lm-box{background:#fff;border-radius:22px;max-width:400px;width:100%;padding:26px;box-shadow:0 24px 60px rgba(74,69,83,.3);max-height:92vh;overflow:auto;animation:lmIn .45s cubic-bezier(.22,.8,.36,1) both}
+@keyframes lmFade{from{opacity:0}to{opacity:1}}
+@keyframes lmIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes lmItem{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.lm-overlay.open .lm-box>*{animation:lmItem .5s cubic-bezier(.22,.8,.36,1) both}
+.lm-overlay.open .lm-box>*:nth-child(5){animation-delay:.05s}
+.lm-overlay.open .lm-box>*:nth-child(6){animation-delay:.1s}
+.lm-overlay.open .lm-box>*:nth-child(7){animation-delay:.15s}
+.lm-overlay.open .lm-box>*:nth-child(8){animation-delay:.2s}
+.lm-overlay.open .lm-box>*:nth-child(9){animation-delay:.25s}
+.lm-overlay.open .lm-box>*:nth-child(10){animation-delay:.3s}
+.lm-overlay.open .lm-box>*:nth-child(11){animation-delay:.33s}
+.lm-overlay.open .lm-box>*:nth-child(12){animation-delay:.36s}
+.lm-overlay.open .lm-box>*:nth-child(13){animation-delay:.42s}
+.lm-overlay.open .lm-box>*:nth-child(14){animation-delay:.48s}
+.lm-overlay.open .lm-box>*:nth-child(15){animation-delay:.54s}
+.lm-overlay.open .lm-box>*:nth-child(16){animation-delay:.6s}
+.lm-badge{width:56px;height:56px;margin:0 auto 10px;border-radius:18px;background:var(--grad);display:flex;align-items:center;justify-content:center}
+.lm-badge .ms{font-size:30px;color:#fff;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 40}
+.lm-box h3{text-align:center}
+.lm-box .lm-sub{text-align:center}
+@media (prefers-reduced-motion: reduce){.lm-overlay.open,.lm-box,.lm-overlay.open .lm-box>*{animation:none}}
 .lm-box h3{font-size:1.15rem;font-weight:900;margin-bottom:4px}
 .lm-box .lm-sub{font-size:.85rem;color:var(--muted);font-weight:700;margin-bottom:16px}
 .lm-btn{display:flex;align-items:center;gap:10px;width:100%;padding:.8em 1em;margin-bottom:10px;border-radius:14px;border:2px solid var(--line);background:#fff;font-family:inherit;font-weight:900;font-size:.98rem;color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;text-align:left}
-.lm-btn:hover{border-color:var(--accent2);background:#fbfaff}
+.lm-btn:hover{border-color:var(--accent2);background:#fbfaff;transform:translateY(-1px);box-shadow:0 6px 14px rgba(196,181,253,.25)}
+.lm-btn{transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
+.lm-btn:active{transform:translateY(0)}
+#lmEmailLogin{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(255,184,209,.4)}
+.lm-box input{transition:border-color .15s,box-shadow .15s}
+.lm-box input:focus{box-shadow:0 0 0 4px rgba(196,181,253,.25)}
 .lm-btn .ms{color:#9a86d8}
 .lm-or{text-align:center;color:var(--muted);font-weight:900;font-size:.8rem;margin:12px 0}
 .lm-box input{width:100%;padding:.75em 1em;border:2px solid var(--line);border-radius:12px;font-family:inherit;font-size:.95rem;margin-bottom:10px;color:var(--text);background:#fff}
@@ -97,7 +123,7 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 <header class="hero wrap">
   <div class="fp-logo"><span class="ms">fingerprint</span></div>
   <h1>とろろぉーーーー<span class="grad-text">ID</span></h1>
-  <p>とろIDの設定ページ。対応サイト全部で使える共通アカウントだよ。</p>
+  <p>とろろぉーーーーID（とろID）の設定ページです。対応サイトすべてで使える共通アカウントです。</p>
   <div><span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">読み込み中…</span></span></div>
 </header>
 
@@ -136,7 +162,7 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
     <div class="sites">
       <a class="site-card" href="https://tr3131kami.github.io/yt-hp/" target="_blank" rel="noopener"><span class="ms">home</span><h3>とろろぉーーーー ホームページ</h3><p>同じID・同じ会員番号でログインできます</p></a>
       <a class="site-card" href="https://tr3131kami.github.io/suzunokana-hp/" target="_blank" rel="noopener"><span class="ms">stadia_controller</span><h3>suzunokana 公式ホームページ</h3><p>同じID・同じ会員番号でログインできます</p></a>
-      <a class="site-card" href="https://kamiki-chyt.github.io/kamiki-hp/" target="_blank" rel="noopener"><span class="ms">groups</span><h3>神木チャンネル 公式サイト</h3><p>同じID・同じ会員番号でログインできます（ログイン操作はサイトごと）</p></a>
+      <a class="site-card" href="https://kamiki-chyt.github.io/kamiki-hp/" target="_blank" rel="noopener"><span class="ms">groups</span><h3>神木チャンネル 公式サイト</h3><p>同じID・同じ会員番号でログインできます（ログイン操作はサイトごとに必要です）</p></a>
     </div>
   </section>
 </main>
@@ -145,8 +171,9 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 
 <div class="lm-overlay" id="loginModal" role="dialog" aria-modal="true" aria-label="ログイン">
   <div class="lm-box">
+    <div class="lm-badge"><span class="ms">fingerprint</span></div>
     <h3>とろろぉーーーーIDでログイン</h3>
-    <p class="lm-sub">対応サイト共通のアカウントでログインします</p>
+    <p class="lm-sub">対応サイト共通のアカウントでログインします。いずれかの方法をお選びください。</p>
     <div class="lm-error" id="lmError"></div>
     <div class="lm-info" id="lmInfo"></div>
     <button class="lm-btn" id="lmScratch" type="button"><span class="ms">stadia_controller</span>Scratchでログイン</button>
@@ -162,7 +189,7 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
     </div>
     <button class="lm-btn" id="lmReset" type="button"><span class="ms">lock_reset</span>パスワードを忘れた場合</button>
     <button class="lm-btn lm-close" id="lmClose" type="button">閉じる</button>
-    <p class="lm-note">Scratchログインは ScratchLoginSystem（suzunokana × とろろぉーーーー）を使います。パスキーは登録した端末でのみ使えます。</p>
+    <p class="lm-note">Scratchログインは ScratchLoginSystem（suzunokana × とろろぉーーーー）を使用します。パスキーは登録した端末でのみご利用いただけます。</p>
   </div>
 </div>
 
@@ -208,7 +235,7 @@ function identity() {
 function render() {
   const idn = identity();
   const chip = $('statusChip'), st = $('statusText');
-  if (idn) { chip.classList.add('on'); st.textContent = idn.name + ' でログイン中'; }
+  if (idn) { chip.classList.add('on'); st.textContent = idn.name + ' 様 ログイン中です'; }
   else { chip.classList.remove('on'); st.textContent = 'ログインしていません'; }
   const card = $('idCard');
   if (idn) {
@@ -231,7 +258,7 @@ function renderPk() {
   else st.textContent = '未登録です';
   $('pkRegisterBtn').disabled = !pkSupported || !idn;
   $('pkDeleteBtn').disabled = !rec;
-  if (!idn && pkSupported && !rec) st.textContent = '未登録です（登録には先にログインが必要です）';
+  if (!idn && pkSupported && !rec) st.textContent = '未登録です（登録には、先にログインが必要です）';
 }
 function pkMsg(text, ok) { const m = $('pkMsg'); m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
 
@@ -275,19 +302,19 @@ function friendlyError(e) {
   const c = (e && e.code) || '';
   const map = {
     'auth/invalid-email': 'メールアドレスの形式が違います',
-    'auth/missing-email': 'メールアドレスを入力してね',
-    'auth/missing-password': 'パスワードを入力してね',
-    'auth/weak-password': 'パスワードが短すぎます（6文字以上にしてね）',
-    'auth/email-already-in-use': 'このメールアドレスは登録済みです。「ログイン」を押してね',
+    'auth/missing-email': 'メールアドレスを入力してください',
+    'auth/missing-password': 'パスワードを入力してください',
+    'auth/weak-password': 'パスワードが短すぎます（6文字以上にしてください）',
+    'auth/email-already-in-use': 'このメールアドレスは登録済みです。「ログイン」を押してください',
     'auth/invalid-credential': 'メールアドレスかパスワードが違います',
     'auth/user-not-found': 'メールアドレスかパスワードが違います',
     'auth/wrong-password': 'メールアドレスかパスワードが違います',
-    'auth/popup-closed-by-user': 'ログイン画面が閉じられました。もう一度試してね',
-    'auth/cancelled-popup-request': 'ログイン画面が閉じられました。もう一度試してね',
-    'auth/account-exists-with-different-credential': 'このメールアドレスは別の方法で登録済みです。別のログイン方法を試してね',
+    'auth/popup-closed-by-user': 'ログイン画面が閉じられました。もう一度お試しください',
+    'auth/cancelled-popup-request': 'ログイン画面が閉じられました。もう一度お試しください',
+    'auth/account-exists-with-different-credential': 'このメールアドレスは別の方法で登録済みです。別のログイン方法をお試しください',
     'auth/unauthorized-domain': 'このサイトのドメインが許可されていません',
-    'auth/too-many-requests': '試行が多すぎます。少し待ってから試してね',
-    'auth/network-request-failed': '通信に失敗しました。接続を確認してね'
+    'auth/too-many-requests': '試行回数が多すぎます。しばらく待ってからお試しください',
+    'auth/network-request-failed': '通信に失敗しました。接続をご確認ください'
   };
   return map[c] || ('ログインに失敗しました（' + (c || 'unknown') + '）');
 }
@@ -314,8 +341,8 @@ $('lmEmailSignup').addEventListener('click', async () => {
 $('lmReset').addEventListener('click', async () => {
   lmError(null); lmInfo(null);
   const email = $('lmEmail').value.trim();
-  if (!email) { lmError('先にメールアドレスを入力してね'); return; }
-  try { await sendPasswordResetEmail(auth, email); lmInfo('パスワード再設定のメールを送りました。メールを確認してね'); }
+  if (!email) { lmError('まずメールアドレスを入力してください'); return; }
+  try { await sendPasswordResetEmail(auth, email); lmInfo('パスワード再設定のメールをお送りしました。メールをご確認ください'); }
   catch (e) { lmError(friendlyError(e)); }
 });
 $('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.login(); });
@@ -329,9 +356,9 @@ const unb64 = s => Uint8Array.from(atob(s.replaceAll('-', '+').replaceAll('_', '
 async function pkRegister() {
   pkMsg('');
   const idn = identity();
-  if (!idn) { pkMsg('先にログインしてから登録してね', false); return; }
+  if (!idn) { pkMsg('まずログインしてからご登録ください', false); return; }
   if (!pkSupported) { pkMsg('このブラウザはパスキーに未対応です', false); return; }
-  if (pkRecord()) { pkMsg('すでに登録済みです。作り直す場合は先に「登録を削除」してね', false); return; }
+  if (pkRecord()) { pkMsg('すでに登録済みです。作り直す場合は、先に「登録を削除」してください', false); return; }
   try {
     const cred = await navigator.credentials.create({ publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
@@ -352,7 +379,7 @@ async function pkRegister() {
 async function pkLoginFlow() {
   const rec = pkRecord();
   if (!pkSupported) { lmError('このブラウザはパスキーに未対応です'); return false; }
-  if (!rec) { lmError('この端末にパスキーが登録されていません。先にどれかの方法でログインして、このページで登録してね'); return false; }
+  if (!rec) { lmError('この端末にパスキーが登録されていません。先にいずれかの方法でログインし、このページでご登録ください'); return false; }
   try {
     const assertion = await navigator.credentials.get({ publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
