@@ -117,15 +117,64 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 .lm-note{font-size:.78rem;color:var(--muted);font-weight:700;margin-top:10px}
 .pk-msg{font-size:.86rem;font-weight:700;margin-top:10px;min-height:1.2em}
 .pk-msg.ok{color:#1e7d55}.pk-msg.err{color:#c2435e}
+
+/* STPR ID風レイアウト */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1.5px solid var(--line)}
+.sh-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;padding-bottom:10px}
+.sh-logo{display:flex;align-items:center;gap:9px;font-weight:900;font-size:1.05rem;text-decoration:none}
+.sh-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;flex:none}
+.sh-mark .ms{font-size:20px;color:#fff;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.sh-right{display:flex;align-items:center;gap:10px}
+.sh-right .status-chip{margin-top:0}
+.hero{padding-top:56px}
+.hero-actions{margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.hero-actions .btn{font-size:1.05rem;padding:.9em 2.4em}
+.hero-login-note{font-size:.88rem;color:var(--muted);font-weight:700}
+.hero-login-note button{background:none;border:none;font:inherit;color:#8a6fd6;font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.about-eyebrow{text-align:center;color:#b18cff;font-weight:900;letter-spacing:.35em;font-size:.8rem;margin-bottom:6px}
+.about-title{text-align:center;font-size:1.5rem;font-weight:900;margin-bottom:8px}
+.about-lead{text-align:center;color:var(--muted);font-weight:700;margin-bottom:22px}
+.about-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.about-card{background:var(--card);border:1.5px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:26px 20px;text-align:center}
+.about-art{width:76px;height:76px;margin:0 auto 14px;border-radius:22px;display:flex;align-items:center;justify-content:center}
+.about-art .ms{font-size:38px;color:#fff;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 40}
+.about-art.pink{background:linear-gradient(135deg,#ffb8d1,#f582a3)}
+.about-art.purple{background:linear-gradient(135deg,#c4b5fd,#9a86d8)}
+.about-art.mint{background:linear-gradient(135deg,#a5e8e0,#5ec8b8)}
+.about-card h3{font-size:1.08rem;font-weight:900;margin-bottom:6px}
+.about-card p{font-size:.86rem;color:var(--muted);font-weight:700;text-align:left}
+.about-more{text-align:center;margin-top:20px;font-weight:900;color:#8a6fd6}
+.footer-links{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.footer-links a{color:var(--muted);font-weight:700;font-size:.85rem;text-decoration:none}
+.footer-links a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
+<div class="site-header"><div class="wrap sh-in">
+  <a class="sh-logo" href="#"><span class="sh-mark"><span class="ms">fingerprint</span></span>とろろぉーーーーID</a>
+  <div class="sh-right"><span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">読み込み中…</span></span><button class="btn small" id="hdrLoginBtn" type="button">ログイン</button></div>
+</div></div>
 <header class="hero wrap">
   <div class="fp-logo"><span class="ms">fingerprint</span></div>
   <h1>とろろぉーーーー<span class="grad-text">ID</span></h1>
-  <p>とろろぉーーーーID（とろID）の設定ページです。対応サイトすべてで使える共通アカウントです。</p>
-  <div><span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">読み込み中…</span></span></div>
+  <p>とろろぉーーーーIDとは、とろろぉーーーーの各種サイトを、1つのIDでご利用いただける無料アカウントです。</p>
+  <div class="hero-actions">
+    <button class="btn" id="heroSignupBtn" type="button">新規アカウント登録</button>
+    <p class="hero-login-note">すでにアカウントをお持ちの方は <button id="heroLoginBtn" type="button">ログイン</button></p>
+  </div>
 </header>
+
+<section class="sec wrap reveal">
+  <p class="about-eyebrow">ABOUT</p>
+  <h2 class="about-title">とろろぉーーーーIDとは？</h2>
+  <p class="about-lead">1つのIDで、対応サイトのサービスをご利用いただけます。</p>
+  <div class="about-grid">
+    <div class="about-card"><div class="about-art pink"><span class="ms">lock</span></div><h3>限定ページ</h3><p>とろろぉーーーーのホームページで、ログインした方だけが見られる限定ページをご利用いただけます。</p></div>
+    <div class="about-card"><div class="about-art purple"><span class="ms">language</span></div><h3>公式サイト</h3><p>suzunokana公式ホームページや神木チャンネル公式サイトでも、同じID・同じ会員番号でログインできます。</p></div>
+    <div class="about-card"><div class="about-art mint"><span class="ms">mail</span></div><h3>お問い合わせ</h3><p>神木チャンネル公式サイトのお問い合わせフォームは、ログインした方がご利用いただけます。</p></div>
+  </div>
+  <p class="about-more">対応サイトは今後も追加予定です</p>
+</section>
 
 <main class="wrap">
   <section class="sec reveal">
@@ -167,7 +216,14 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
   </section>
 </main>
 
-<footer>とろろぉーーーーID（とろID）</footer>
+<footer>
+  <div class="footer-links">
+    <a href="https://tr3131kami.github.io/yt-hp/" target="_blank" rel="noopener">とろろぉーーーー ホームページ</a>
+    <a href="https://tr3131kami.github.io/suzunokana-hp/" target="_blank" rel="noopener">suzunokana 公式ホームページ</a>
+    <a href="https://kamiki-chyt.github.io/kamiki-hp/" target="_blank" rel="noopener">神木チャンネル 公式サイト</a>
+  </div>
+  <p>© 2026 とろろぉーーーーID（とろID）</p>
+</footer>
 
 <div class="lm-overlay" id="loginModal" role="dialog" aria-modal="true" aria-label="ログイン">
   <div class="lm-box">
@@ -237,6 +293,8 @@ function render() {
   const chip = $('statusChip'), st = $('statusText');
   if (idn) { chip.classList.add('on'); st.textContent = idn.name + ' 様 ログイン中です'; }
   else { chip.classList.remove('on'); st.textContent = 'ログインしていません'; }
+  const hdrBtn = $('hdrLoginBtn'); if (hdrBtn) hdrBtn.style.display = idn ? 'none' : '';
+  const heroActs = document.querySelector('.hero-actions'); if (heroActs) heroActs.style.display = idn ? 'none' : '';
   const card = $('idCard');
   if (idn) {
     const noText = idn.no != null ? String(idn.no).padStart(4, '0') : '—';
@@ -295,6 +353,9 @@ function lmError(msg) { lmShow('lmError', msg); if (msg) lmShow('lmInfo', null);
 function lmInfo(msg) { lmShow('lmInfo', msg); if (msg) lmShow('lmError', null); }
 function openModal() { lmError(null); lmInfo(null); $('loginModal').classList.add('open'); }
 function closeModal() { $('loginModal').classList.remove('open'); }
+$('hdrLoginBtn').addEventListener('click', openModal);
+$('heroLoginBtn').addEventListener('click', openModal);
+$('heroSignupBtn').addEventListener('click', openModal);
 $('lmClose').addEventListener('click', closeModal);
 $('loginModal').addEventListener('click', e => { if (e.target === $('loginModal')) closeModal(); });
 
