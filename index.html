@@ -130,16 +130,32 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
 .link-form{margin-top:12px}
 .link-form input{width:100%;padding:.75em 1em;border:2px solid var(--line);border-radius:12px;font-family:inherit;font-size:.95rem;margin-bottom:10px;color:var(--text);background:#fff}
 .link-form input:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 4px rgba(196,181,253,.25)}
+#viewTop[hidden],#viewTopB[hidden],#viewSetting[hidden]{display:none!important}
 </style>
 </head>
 <body>
 <header class="hero wrap">
   <h1>とろろぉーーーー<span class="grad-text">ID</span></h1>
-  <p>とろろぉーーーーID（とろID）の設定ページです。対応サイトすべてで使える共通アカウントです。</p>
+  <p>とろろぉーーーーID（とろID）のページです。対応サイトすべてで使える共通アカウントです。</p>
   <div><span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">読み込み中…</span></span></div>
 </header>
 
 <main class="wrap">
+<div id="viewTop">
+  <section class="sec" id="linkEmailBox" hidden>
+    <div class="card">
+      <p class="note" style="margin-bottom:10px">ログインリンクが開かれました。確認のため、ログインに使ったメールアドレスを入力してください。</p>
+      <div class="link-form"><input type="email" id="linkEmailInput" placeholder="メールアドレス" autocomplete="email"><button class="btn small" id="linkEmailGo" type="button">ログインを完了する</button></div>
+    </div>
+  </section>
+  <section class="sec reveal">
+    <div class="card" id="topCard"><p class="note">読み込み中…</p></div>
+  </section>
+</div>
+<div id="viewSetting" hidden>
+  <section class="sec">
+    <a class="btn small ghost" href="./" style="text-decoration:none"><span class="ms">arrow_back</span>トップへ戻る</a>
+  </section>
   <section class="sec reveal">
     <div class="sec-head"><span class="ic"><span class="ms">badge</span></span><h2>会員カード</h2></div>
     <div class="card" id="idCard"><p class="note">読み込み中…</p></div>
@@ -168,13 +184,15 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
     <div class="card" id="delCard"><p class="note">読み込み中…</p></div>
   </section>
 
+</div>
+<div id="viewTopB">
   <section class="sec reveal">
     <div class="sec-head"><span class="ic"><span class="ms">login</span></span><h2>ログイン方法</h2></div>
     <div class="methods">
       <div class="method"><span class="ms">stadia_controller</span>Scratch<small>ScratchLoginSystem</small></div>
       <div class="method"><span class="ms">account_circle</span>Google<small>Googleアカウント</small></div>
       <div class="method"><span class="ms">code</span>GitHub<small>GitHubアカウント</small></div>
-      <div class="method"><span class="ms">mail</span>メールアドレス<small>リンクでログイン</small></div>
+      <div class="method"><span class="ms">mail</span>メールアドレス<small>パスワード＋メール認証</small></div>
       <div class="method"><span class="ms">smartphone</span>電話番号<small>SMSコードでログイン</small></div>
       <div class="method"><span class="ms">passkey</span>パスキー<small>登録した端末のみ</small></div>
     </div>
@@ -188,6 +206,7 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
       <a class="site-card" href="https://kamiki-chyt.github.io/kamiki-hp/" target="_blank" rel="noopener"><span class="ms">groups</span><h3>神木チャンネル 公式サイト</h3><p>同じID・同じ会員番号でログインできます（ログイン操作はサイトごとに必要です）</p></a>
     </div>
   </section>
+</div>
 </main>
 
 <footer>とろろぉーーーーID（とろID）</footer>
@@ -205,8 +224,13 @@ footer{text-align:center;padding:44px 20px 54px;color:var(--muted);font-weight:7
     <button class="lm-btn" id="lmEmailBtn" type="button"><span class="ms">mail</span>メールアドレスでログイン</button>
     <div id="lmEmailPanel" hidden>
       <input type="email" id="lmEmail" placeholder="メールアドレス" autocomplete="email">
-      <button class="lm-btn" id="lmEmailSend" type="button">ログインリンクを送信</button>
-      <p class="lm-note">メールに届くリンクを開くとログインできます。初めての方も、リンクを開くだけで登録できます。</p>
+      <input type="password" id="lmPassword" placeholder="パスワード" autocomplete="current-password">
+      <div class="lm-row">
+        <button class="lm-btn" id="lmEmailLogin" type="button">ログイン</button>
+        <button class="lm-btn" id="lmEmailSignup" type="button">新規登録</button>
+      </div>
+      <button class="lm-btn" id="lmReset" type="button"><span class="ms">lock_reset</span>パスワードを忘れた場合</button>
+      <p class="lm-note">パスワードが合っていたら、メールにログイン用のリンクを送ります。リンクを開くとログインが完了します（2段階認証）。</p>
     </div>
     <button class="lm-btn" id="lmPhoneBtn" type="button"><span class="ms">smartphone</span>電話番号でログイン</button>
     <div id="lmPhonePanel" hidden>
@@ -243,6 +267,13 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 let fbUser = null, memberNo = null;
+const isSetting = new URLSearchParams(location.search).get('q') === 'setting';
+if (isSetting) { const vt = document.getElementById('viewTop'), vb = document.getElementById('viewTopB'), vs = document.getElementById('viewSetting'); if (vt) vt.hidden = true; if (vb) vb.hidden = true; if (vs) vs.hidden = false; document.title = 'アカウント設定 | とろろぉーーーーID'; }
+const PENDING_KEY = 'tororo_pending_link';
+function pendingLink() { try { const p = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); if (p && p.email && Date.now() - p.ts < 60 * 60 * 1000) return p; } catch (e) {} return null; }
+function pendingExpired() { try { const p = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); return !!(p && p.ts && Date.now() - p.ts >= 60 * 60 * 1000); } catch (e) { return false; } }
+function setPendingLink(email) { try { localStorage.setItem(PENDING_KEY, JSON.stringify({ email: email, ts: Date.now() })); } catch (e) {} }
+function clearPendingLink() { try { localStorage.removeItem(PENDING_KEY); } catch (e) {} }
 function scratchUser() { try { return localStorage.getItem('sls_user') || null; } catch (e) { return null; } }
 const PK_KEY = 'tororo_passkey', PK_SESSION = 'tororo_pk_user';
 const pkSupported = !!window.PublicKeyCredential;
@@ -252,6 +283,7 @@ function pkUser() { try { return sessionStorage.getItem(PK_SESSION); } catch (e)
 function identity() {
   if (fbUser) {
     const provider = (fbUser.providerData[0] && fbUser.providerData[0].providerId) || '';
+    if (provider === 'password' && pendingLink()) return null;
     const method = provider === 'google.com' ? 'Googleでログイン中' : provider === 'github.com' ? 'GitHubでログイン中' : provider === 'phone' ? '電話番号でログイン中' : 'メールアドレスでログイン中';
     return { name: fbUser.displayName || fbUser.email || fbUser.phoneNumber || 'ユーザー', method, avatar: fbUser.photoURL || '', no: memberNo };
   }
@@ -279,9 +311,27 @@ function render() {
     card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:14px">ログインすると、ここに会員カードが表示されます。</p><button class="btn" id="cardLogin" type="button"><span class="ms">login</span>ログイン方法を選ぶ</button></div>';
     $('cardLogin').addEventListener('click', openModal);
   }
+  renderTop();
   renderPk();
   renderLink();
   renderDelete();
+}
+function renderTop() {
+  const card = $('topCard'); if (!card) return;
+  const pend = pendingLink();
+  if (pend && fbUser) {
+    card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:12px">パスワードが確認できました。' + esc(pend.email) + ' にログイン用のリンクを送信しました。メール内のリンクを開くとログインが完了します。</p><button class="btn small ghost" id="topPendingCancel" type="button">やめる（ログアウト）</button></div>';
+    $('topPendingCancel').addEventListener('click', async () => { clearPendingLink(); await doLogout(); });
+    return;
+  }
+  const idn = identity();
+  if (idn) {
+    card.innerHTML = '<div class="center"><p class="note" style="margin-bottom:14px">' + esc(idn.name) + ' 様／' + esc(idn.method) + (idn.no != null ? '／会員No.' + String(idn.no).padStart(4, '0') : '') + '</p><div class="pk-row" style="justify-content:center"><a class="btn" href="?q=setting" style="text-decoration:none"><span class="ms">settings</span>アカウント設定</a><button class="btn ghost" id="topLogout" type="button"><span class="ms">logout</span>ログアウト</button></div></div>';
+    $('topLogout').addEventListener('click', doLogout);
+  } else {
+    card.innerHTML = '<div class="center"><button class="btn" id="topLogin" type="button"><span class="ms">login</span>ログイン</button></div>';
+    $('topLogin').addEventListener('click', openModal);
+  }
 }
 function renderPk() {
   const st = $('pkStatus'), rec = pkRecord(), idn = identity();
@@ -344,6 +394,10 @@ getRedirectResult(auth).catch(() => {});
 onAuthStateChanged(auth, async user => {
   fbUser = user; memberNo = null; linkedScratch = null; render();
   if (user) {
+    const prov0 = (user.providerData[0] && user.providerData[0].providerId) || '';
+    if (prov0 === 'password' && pendingExpired()) { clearPendingLink(); try { await signOut(auth); } catch (e) {} alert('メール認証の期限（1時間）が切れました。もう一度ログインしてください'); return; }
+    if (prov0 !== 'password') clearPendingLink();
+    try { const rt = Number(localStorage.getItem('tororo_reauth_delete') || 0); if (rt) { localStorage.removeItem('tororo_reauth_delete'); if (Date.now() - rt < 15 * 60 * 1000) delReauthed = true; } } catch (e) {}
     try { memberNo = await ensureMemberNo(user); } catch (e) {}
     render();
     syncScratchIndex();
@@ -404,15 +458,29 @@ $('lmGoogle').addEventListener('click', () => socialLogin(new GoogleAuthProvider
 $('lmGithub').addEventListener('click', () => socialLogin(new GithubAuthProvider(), 'GitHub'));
 $('lmEmailBtn').addEventListener('click', () => { const p = $('lmEmailPanel'); p.hidden = !p.hidden; if (!p.hidden) $('lmPhonePanel').hidden = true; });
 $('lmPhoneBtn').addEventListener('click', () => { const p = $('lmPhonePanel'); p.hidden = !p.hidden; if (!p.hidden) $('lmEmailPanel').hidden = true; });
-$('lmEmailSend').addEventListener('click', async () => {
+async function emailPasswordStep(signup) {
+  lmError(null); lmInfo(null);
+  const email = $('lmEmail').value.trim(), pw = $('lmPassword').value;
+  if (!email) { lmError('メールアドレスを入力してください'); return; }
+  if (!pw) { lmError('パスワードを入力してください'); return; }
+  try {
+    if (signup) await createUserWithEmailAndPassword(auth, email, pw);
+    else await signInWithEmailAndPassword(auth, email, pw);
+    await sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + location.search, handleCodeInApp: true });
+    try { localStorage.setItem('tororo_email_for_link', email); } catch (e) {}
+    setPendingLink(email);
+    closeModal(); render();
+    alert('パスワードが確認できました。メールにログイン用のリンクを送信しました。リンクを開くとログインが完了します。');
+  } catch (e) { lmError(friendlyError(e)); }
+}
+$('lmEmailLogin').addEventListener('click', () => emailPasswordStep(false));
+$('lmEmailSignup').addEventListener('click', () => emailPasswordStep(true));
+$('lmReset').addEventListener('click', async () => {
   lmError(null); lmInfo(null);
   const email = $('lmEmail').value.trim();
-  if (!email) { lmError('メールアドレスを入力してください'); return; }
-  try {
-    await sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname, handleCodeInApp: true });
-    try { localStorage.setItem('tororo_email_for_link', email); } catch (e) {}
-    lmInfo('ログインリンクをメールでお送りしました。届いたメールのリンクを開いてください');
-  } catch (e) { lmError(friendlyError(e)); }
+  if (!email) { lmError('まずメールアドレスを入力してください'); return; }
+  try { await sendPasswordResetEmail(auth, email); lmInfo('パスワード再設定のメールをお送りしました。メールをご確認ください'); }
+  catch (e) { lmError(friendlyError(e)); }
 });
 function toE164(v) {
   const d = String(v || '').replace(/[\s\-()]/g, '');
@@ -441,17 +509,25 @@ $('lmPhoneLogin').addEventListener('click', async () => {
   catch (e) { lmError(friendlyError(e)); }
 });
 /* email link sign-in completion */
+let linkHref = '';
+async function completeEmailLink(email, href) {
+  try {
+    await signInWithEmailLink(auth, email, href || location.href);
+    try { localStorage.removeItem('tororo_email_for_link'); } catch (e) {}
+    clearPendingLink();
+    const q = new URLSearchParams(location.search).get('q');
+    history.replaceState(null, '', location.pathname + (q ? '?q=' + q : ''));
+  } catch (e) { alert('メールリンクでのログインに失敗しました：' + friendlyError(e)); }
+}
 if (isSignInWithEmailLink(auth, location.href)) {
+  linkHref = location.href;
   let linkEmail = null;
   try { linkEmail = localStorage.getItem('tororo_email_for_link'); } catch (e) {}
-  if (!linkEmail) linkEmail = window.prompt('ログインに使ったメールアドレスを入力してください');
-  if (linkEmail) {
-    signInWithEmailLink(auth, linkEmail, location.href).then(() => {
-      try { localStorage.removeItem('tororo_email_for_link'); } catch (e) {}
-      history.replaceState(null, '', location.pathname);
-    }).catch(e => { setTimeout(() => alert('メールリンクでのログインに失敗しました：' + friendlyError(e)), 400); });
-  }
+  if (linkEmail) completeEmailLink(linkEmail, linkHref);
+  else { const box = $('linkEmailBox'); if (box) box.hidden = false; }
 }
+const linkGo = $('linkEmailGo');
+if (linkGo) linkGo.addEventListener('click', () => { const v = $('linkEmailInput').value.trim(); if (!v) return; $('linkEmailBox').hidden = true; completeEmailLink(v, linkHref); });
 $('lmScratch').addEventListener('click', () => { closeModal(); ScratchLogin.login(); });
 try {
   ScratchLogin.init({
@@ -462,13 +538,17 @@ try {
 resolveScratchNo();
 
 /* アカウントの削除 */
-let delReauthed = false, delVerifier = null, delVerifyId = null;
+let delReauthed = false, delDone = false, delVerifier = null, delVerifyId = null;
 function delMsg(text, ok) { const m = $('delMsg'); if (m) { m.textContent = text || ''; m.className = 'pk-msg ' + (text ? (ok ? 'ok' : 'err') : ''); } }
 function renderDelete() {
   const card = $('delCard'); if (!card) return;
   if (!fbUser) {
     delReauthed = false;
-    card.innerHTML = '<p class="note">アカウントの削除は、Google / GitHub / メールアドレス / 電話番号でログインしたときにご利用いただけます。Scratchやパスキーでログイン中は削除できません（Scratchアカウント自体は削除されません）。</p><p class="pk-msg" id="delMsg"></p>';
+    card.innerHTML = (delDone ? '<p class="pk-msg ok" style="margin-bottom:10px">アカウントを削除しました。ご利用ありがとうございました。</p>' : '') + '<p class="note">アカウントの削除は、Google / GitHub / メールアドレス / 電話番号でログインしたときにご利用いただけます。Scratchやパスキーでログイン中は削除できません（Scratchアカウント自体は削除されません）。</p><p class="pk-msg" id="delMsg"></p>';
+    return;
+  }
+  if ((fbUser.providerData[0] || {}).providerId === 'password' && pendingLink()) {
+    card.innerHTML = '<p class="note">メール認証の確認待ちです。メール内のリンクを開くと、削除ができるようになります。</p><p class="pk-msg" id="delMsg"></p>';
     return;
   }
   const providers = fbUser.providerData.map(p => p.providerId);
@@ -476,7 +556,7 @@ function renderDelete() {
   if (providers.includes('google.com')) reauth += '<button class="btn small ghost" id="delReGoogle" type="button"><span class="ms">account_circle</span>Googleで本人確認</button>';
   if (providers.includes('github.com')) reauth += '<button class="btn small ghost" id="delReGithub" type="button"><span class="ms">code</span>GitHubで本人確認</button>';
   if (providers.includes('phone')) reauth += '<button class="btn small ghost" id="delPhoneSend" type="button"><span class="ms">smartphone</span>SMSでコードを送信</button><span id="delPhoneWrap" hidden><input type="text" id="delPhoneCode" placeholder="SMSで届いた6桁のコード" inputmode="numeric"><button class="btn small" id="delPhoneConfirm" type="button">コードで本人確認</button></span><span id="delRecaptcha"></span>';
-  if (providers.includes('password')) reauth += '<input type="password" id="delPassword" placeholder="パスワード" autocomplete="current-password"><button class="btn small ghost" id="delRePassword" type="button">パスワードで本人確認</button><button class="btn small ghost" id="delSkipReauth" type="button">ログイン直後です（確認を省略）</button>';
+  if (providers.includes('password')) reauth += '<input type="password" id="delPassword" placeholder="パスワード" autocomplete="current-password"><button class="btn small ghost" id="delRePassword" type="button">パスワードで本人確認</button><button class="btn small ghost" id="delLinkReauth" type="button">メールリンクで本人確認</button>';
   let html = '<p class="note" style="margin-bottom:10px">アカウントを削除すると、会員番号とログイン方法の連携情報が消えます。元に戻すことはできません。再登録した場合は、新しい会員番号になります。</p>';
   if (delReauthed) {
     html += '<p class="note" style="margin-bottom:10px">本人確認ができました。本当に削除する場合は、下のボタンを押してください。</p><div class="pk-row"><button class="btn small danger" id="delFinal" type="button"><span class="ms">person_remove</span>本当にアカウントを削除する</button><button class="btn small ghost" id="delCancel" type="button">やめる</button></div>';
@@ -516,7 +596,13 @@ function renderDelete() {
       delReauthed = true; renderDelete(); delMsg('本人確認ができました', true);
     } catch (e) { delMsg(friendlyError(e), false); }
   });
-  const dsr = $('delSkipReauth'); if (dsr) dsr.addEventListener('click', () => { delReauthed = true; renderDelete(); delMsg('削除に進みます。ログインから時間がたっていると、削除のときにエラーになることがあります', true); });
+  const dlr = $('delLinkReauth'); if (dlr) dlr.addEventListener('click', async () => {
+    try {
+      await sendSignInLinkToEmail(auth, fbUser.email, { url: location.origin + location.pathname + '?q=setting', handleCodeInApp: true });
+      try { localStorage.setItem('tororo_email_for_link', fbUser.email); localStorage.setItem('tororo_reauth_delete', String(Date.now())); } catch (e) {}
+      delMsg('本人確認用のリンクをメールでお送りしました。リンクを開くと本人確認が完了します', true);
+    } catch (e) { delMsg(friendlyError(e), false); }
+  });
 }
 async function doDeleteAccount() {
   const user = fbUser; if (!user) return;
@@ -526,7 +612,7 @@ async function doDeleteAccount() {
     try { await deleteDoc(doc(db, 'users', user.uid)); } catch (e) {}
     await deleteUser(user);
     try { localStorage.removeItem(PK_KEY); sessionStorage.removeItem(PK_SESSION); } catch (e) {}
-    delReauthed = false;
+    delReauthed = false; delDone = true;
     alert('アカウントを削除しました。ご利用ありがとうございました。');
   } catch (e) {
     if (e && e.code === 'auth/requires-recent-login') { delReauthed = false; renderDelete(); delMsg('本人確認の有効期限が切れました。もう一度本人確認をしてください', false); }
@@ -555,6 +641,10 @@ function linkFriendly(e) {
 function providerLinked(pid) { return !!(fbUser && fbUser.providerData || []).find(p => p.providerId === pid); }
 function renderLink() {
   const card = $('linkCard'); if (!card) return;
+  if (fbUser && (fbUser.providerData[0] || {}).providerId === 'password' && pendingLink()) {
+    card.innerHTML = '<p class="note">メール認証の確認待ちです。メール内のリンクを開くと、連携が使えるようになります。</p>';
+    return;
+  }
   if (!fbUser) {
     const sc = scratchUser();
     if (sc) {
